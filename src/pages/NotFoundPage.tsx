@@ -1,3 +1,3 @@
 export default function NotFoundPage(){
-    <h1 className="text-2x1 front-bold">Page not found</h1>
+    return <h1 className="text-2xl font-bold">Page not found</h1>
 }

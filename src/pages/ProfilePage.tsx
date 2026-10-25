@@ -1,3 +1,3 @@
 export default function ProfilePage(){
-    <h1 className="text-2x1 front-bold">Profile</h1>
+    return <h1 className="text-2xl font-bold">Profile</h1>
 }

@@ -1,3 +1,3 @@
 export default function MessagesPage(){
-    <h1 className="text-2x1 front-bold">Messages</h1>
+    return <h1 className="text-2xl font-bold">Messages</h1>
 }

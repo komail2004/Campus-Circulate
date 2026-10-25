@@ -1,3 +1,3 @@
 export default function BrowsePage() {
-    return <h1 className = "text-2x1 front-bold">Browse</h1>;
+    return <h1 className = "text-2xl font-bold">Browse</h1>;
 }
