@@ -1,16 +1,36 @@
-// Spots on campus. Coordinates are made up for the demo; only the distances between them matter.
+// Campuses and their residence halls.
+// Hall coordinates are the buildings' real locations, from OpenStreetMap (© OpenStreetMap contributors).
 
-import type { Place } from "../types.ts";
+import type { Campus, Place } from "../types.ts";
+
+// A student's campus comes from their .edu email (baldwinwt@g.cofc.edu -> College of Charleston).
+export const campuses: Campus[] = [{ id: "cofc", name: "College of Charleston", domain: "cofc.edu" }];
 
 export const places: Place[] = [
-  { name: "North Hall", lat: 35.0045, lng: -80.0005 },
-  { name: "South Hall", lat: 34.9962, lng: -80.001 },
-  { name: "East Hall", lat: 35.0008, lng: -79.993 },
-  { name: "West Hall", lat: 35.0003, lng: -80.0072 },
-  { name: "Hall Bridge", lat: 35.0025, lng: -79.9968 },
-  { name: "Library", lat: 35.001, lng: -80.0014 },
+  { name: "Berry Hall", campusId: "cofc", lat: 32.78594, lng: -79.93779 },
+  { name: "Craig Hall", campusId: "cofc", lat: 32.78305, lng: -79.93666 },
+  { name: "Rutledge Rivers Hall", campusId: "cofc", lat: 32.78457, lng: -79.93854 },
+  { name: "Buist Rivers", campusId: "cofc", lat: 32.7843, lng: -79.93848 },
+  { name: "Liberty Hall", campusId: "cofc", lat: 32.78302, lng: -79.93569 },
+  { name: "McAlister Hall", campusId: "cofc", lat: 32.78668, lng: -79.93814 },
+  { name: "McConnel Hall", campusId: "cofc", lat: 32.78096, lng: -79.93696 },
 ];
 
 export function getPlace(name: string) {
   return places.find((place) => place.name === name) ?? places[0];
+}
+
+export function getCampus(id: string) {
+  return campuses.find((campus) => campus.id === id);
+}
+
+export function placesOnCampus(campusId: string) {
+  return places.filter((place) => place.campusId === campusId);
+}
+
+// The campus an email belongs to, or undefined if that school isn't on Campus Circulate yet.
+// Subdomains count too: "g.cofc.edu" belongs to "cofc.edu".
+export function campusForEmail(email: string) {
+  const domain = email.trim().toLowerCase().split("@")[1] ?? "";
+  return campuses.find((campus) => domain === campus.domain || domain.endsWith(`.${campus.domain}`));
 }

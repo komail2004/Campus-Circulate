@@ -3,6 +3,7 @@
 
 import { makeCode, makeId } from "../lib/ids.ts";
 import type { Deal, Listing, User } from "../types.ts";
+import { campusForEmail, places } from "./places.ts";
 
 export type Data = {
   users: User[];
@@ -14,11 +15,29 @@ export function isEduEmail(email: string) {
   return /^[^\s@]+@[^\s@]+\.edu$/i.test(email.trim());
 }
 
+// Create an account. Any .edu student can join and buy; `dorm` is only set for students on a Campus Circulate campus.
+export function addUser(data: Data, name: string, email: string, dorm?: string) {
+  const cleanEmail = email.trim().toLowerCase();
+  if (!name.trim()) throw new Error("Enter your name.");
+  if (!isEduEmail(cleanEmail)) throw new Error("Campus Circulate is for students only. Use your .edu email.");
+  if (data.users.some((u) => u.email === cleanEmail)) throw new Error("There's already an account with that email. Sign in instead.");
+
+  const user: User = { id: makeId("u"), name: name.trim(), email: cleanEmail, dorm };
+  return { data: { ...data, users: [...data.users, user] }, user };
+}
+
 export function createListing(
   data: Data,
   sellerId: string,
   input: Pick<Listing, "title" | "priceCents" | "location" | "category" | "description" | "photoUrl">,
 ) {
+  // You can only sell on the campus your .edu email belongs to
+  const seller = data.users.find((u) => u.id === sellerId);
+  const campus = seller ? campusForEmail(seller.email) : undefined;
+  if (!campus) throw new Error("Only students at a Campus Circulate campus can sell.");
+  const place = places.find((p) => p.name === input.location);
+  if (place?.campusId !== campus.id) throw new Error(`You can only sell on your own campus (${campus.name}).`);
+
   const listing: Listing = { ...input, id: makeId("l"), sellerId, status: "active" };
   return { data: { ...data, listings: [listing, ...data.listings] }, listing };
 }

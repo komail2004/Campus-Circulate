@@ -8,6 +8,7 @@ import type { Data } from "./actions.ts";
 export type Store = Data & {
   currentUser: User | null;
   logIn: (email: string) => void;
+  signUp: (name: string, email: string, dorm?: string) => void;
   logOut: () => void;
   createListing: (input: Pick<Listing, "title" | "priceCents" | "location" | "category" | "description" | "photoUrl">) => Listing;
   buyListing: (listingId: string) => Deal;

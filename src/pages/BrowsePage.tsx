@@ -1,22 +1,32 @@
 import { useState } from "react";
 import { Link, useSearchParams } from "react-router";
 import ListingCard from "../components/ListingCard.tsx";
-import { getPlace, places } from "../data/places.ts";
+import { useLayout } from "../components/layoutContext.ts";
+import SignInGate from "../components/SignInGate.tsx";
+import { campusForEmail, campuses, getPlace, places, placesOnCampus } from "../data/places.ts";
 import { useStore } from "../data/storeContext.ts";
 import { milesBetween } from "../lib/distance.ts";
 
-// The home page. Anyone can browse; buying and selling need a sign in.
+// The home page. Anyone can look; clicking anything while signed out opens the sign-in window.
 export default function BrowsePage() {
   const { listings, currentUser } = useStore();
+  const { openSignIn } = useLayout();
   const [params] = useSearchParams();
   const query = params.get("q") ?? "";
   const category = params.get("category");
-  const [from, setFrom] = useState(currentUser?.dorm ?? "Library"); // sort by distance from here
+
+  // filters: which campus, and which hall to measure distance from
+  const myCampus = currentUser ? campusForEmail(currentUser.email) : undefined;
+  const [campusId, setCampusId] = useState(myCampus?.id ?? "all");
+  const [from, setFrom] = useState(currentUser?.dorm ?? places[0].name);
+  const hallOptions = campusId === "all" ? places : placesOnCampus(campusId);
+  const fromHall = hallOptions.some((p) => p.name === from) ? from : hallOptions[0].name;
 
   const search = query.trim().toLowerCase();
-  const origin = getPlace(from);
+  const origin = getPlace(fromHall);
   const results = listings
     .filter((listing) => listing.status !== "sold")
+    .filter((listing) => campusId === "all" || getPlace(listing.location).campusId === campusId)
     .filter((listing) => !category || listing.category === category)
     .filter((listing) => !search || listing.title.toLowerCase().includes(search) || listing.description.toLowerCase().includes(search))
     .map((listing) => ({ listing, miles: milesBetween(origin, getPlace(listing.location)) }))
@@ -27,7 +37,7 @@ export default function BrowsePage() {
   else if (category) heading = category;
 
   return (
-    <div>
+    <SignInGate active={!currentUser} onBlocked={openSignIn}>
       {!query && !category && (
         <section className="card mb-8 grid overflow-hidden md:grid-cols-2">
           <div className="flex flex-col justify-center p-6 md:p-10">
@@ -45,16 +55,38 @@ export default function BrowsePage() {
 
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h2 className="text-2xl font-bold">{heading}</h2>
-        <label className="flex items-center gap-2 text-sm">
-          Nearest to
-          <select value={from} onChange={(event) => setFrom(event.target.value)} className="field w-auto">
-            {places.map((place) => (
-              <option key={place.name} value={place.name}>
-                {place.name === currentUser?.dorm ? `${place.name} (your dorm)` : place.name}
-              </option>
-            ))}
-          </select>
-        </label>
+        <div className="flex flex-wrap items-center gap-3 text-sm">
+          <label className="flex items-center gap-2">
+            Campus
+            <select
+              value={campusId}
+              // keyboard changes skip the click, so check here too
+              onChange={(event) => (currentUser ? setCampusId(event.target.value) : openSignIn())}
+              className="field w-auto"
+            >
+              <option value="all">All campuses</option>
+              {campuses.map((campus) => (
+                <option key={campus.id} value={campus.id}>
+                  {campus.name}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="flex items-center gap-2">
+            Nearest to
+            <select
+              value={fromHall}
+              onChange={(event) => (currentUser ? setFrom(event.target.value) : openSignIn())}
+              className="field w-auto"
+            >
+              {hallOptions.map((place) => (
+                <option key={place.name} value={place.name}>
+                  {place.name === currentUser?.dorm ? `${place.name} (your dorm)` : place.name}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
       </div>
 
       {results.length === 0 && (
@@ -71,6 +103,6 @@ export default function BrowsePage() {
           <ListingCard key={listing.id} listing={listing} distance={miles} />
         ))}
       </div>
-    </div>
+    </SignInGate>
   );
 }

@@ -4,6 +4,6 @@
 import type { User } from "../types.ts";
 
 export const fakeUsers: User[] = [
-  { id: "u1", name: "William Baldwin", email: "baldwinwt@g.cofc.edu", dorm: "West Hall" },
-  { id: "u2", name: "Bob Smith", email: "bobsmith@university.edu", dorm: "North Hall" },
+  { id: "u1", name: "William Baldwin", email: "baldwinwt@g.cofc.edu", dorm: "Rutledge Rivers Hall" },
+  { id: "u2", name: "Bob Smith", email: "bobsmith@g.cofc.edu", dorm: "Berry Hall" },
 ];

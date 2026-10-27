@@ -17,6 +17,9 @@ export function milesBetween(a: Place, b: Place) {
   return 2 * EARTH_RADIUS_MILES * Math.asin(Math.sqrt(h));
 }
 
+// Campus is small, so short distances read better in feet: 0 -> "same hall", 0.02 -> "100 ft", 0.31 -> "0.3 mi".
 export function formatDistance(miles: number) {
-  return miles < 0.05 ? "right here" : `${miles.toFixed(1)} mi`;
+  if (miles < 0.01) return "same hall";
+  if (miles < 0.1) return `${Math.max(50, Math.round((miles * 5280) / 50) * 50)} ft`;
+  return `${miles.toFixed(1)} mi`;
 }

@@ -1,8 +1,15 @@
 // Blueprints: what information each thing in the app has. Other files use these.
 
-// A spot on campus. Coordinates let us measure distance between spots.
+export type Campus = {
+  id: string;
+  name: string;
+  domain: string; // the .edu email domain, e.g. "cofc.edu"
+};
+
+// A residence hall. Coordinates let us measure distance between halls.
 export type Place = {
   name: string;
+  campusId: string;
   lat: number;
   lng: number;
 };
@@ -11,7 +18,7 @@ export type User = {
   id: string;
   name: string;
   email: string;
-  dorm: string; // the name of a Place
+  dorm?: string; // the name of a Place; empty for students whose school isn't on the app yet
 };
 
 export type Category = "Furniture" | "Electronics" | "Textbooks" | "Appliances" | "Clothing" | "Other";

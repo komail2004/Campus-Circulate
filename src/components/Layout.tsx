@@ -3,6 +3,7 @@ import { Link, NavLink, Outlet, useLocation, useNavigate, useSearchParams } from
 import { categories } from "../data/categories.ts";
 import { useStore } from "../data/storeContext.ts";
 import type { LayoutContext } from "./layoutContext.ts";
+import SignInGate from "./SignInGate.tsx";
 import SignInModal from "./SignInModal.tsx";
 
 function linkClass({ isActive }: { isActive: boolean }) {
@@ -16,9 +17,11 @@ export default function Layout() {
   const { pathname } = useLocation();
   const navigate = useNavigate();
 
+  const signedOut = !currentUser; // until someone signs in, clicks open the sign-in window
   const query = params.get("q") ?? "";
   const activeCategory = pathname === "/" ? params.get("category") : null;
-  const context: LayoutContext = { openSignIn: () => setSignInOpen(true) };
+  const openSignIn = () => setSignInOpen(true);
+  const context: LayoutContext = { openSignIn };
 
   function signOut() {
     logOut();
@@ -34,20 +37,26 @@ export default function Layout() {
           </Link>
 
           {/* search: on phones it drops to its own row */}
-          <form
-            key={query}
-            onSubmit={(event) => {
-              event.preventDefault();
-              const text = String(new FormData(event.currentTarget).get("q") ?? "").trim();
-              navigate(text ? `/?q=${encodeURIComponent(text)}` : "/");
-            }}
-            className="order-last flex w-full gap-2 md:order-none md:w-auto md:flex-1"
-          >
-            <input name="q" defaultValue={query} placeholder="Search for anything" aria-label="Search listings" className="field" />
-            <button type="submit" className="btn btn-primary">
-              Search
-            </button>
-          </form>
+          <SignInGate active={signedOut} onBlocked={openSignIn} className="order-last w-full md:order-none md:w-auto md:flex-1">
+            <form
+              key={query}
+              onSubmit={(event) => {
+                event.preventDefault();
+                if (signedOut) {
+                  openSignIn(); // e.g. pressing Enter while signed out
+                  return;
+                }
+                const text = String(new FormData(event.currentTarget).get("q") ?? "").trim();
+                navigate(text ? `/?q=${encodeURIComponent(text)}` : "/");
+              }}
+              className="flex gap-2"
+            >
+              <input name="q" defaultValue={query} placeholder="Search for anything" aria-label="Search listings" className="field" />
+              <button type="submit" className="btn btn-primary">
+                Search
+              </button>
+            </form>
+          </SignInGate>
 
           <nav className="ml-auto flex items-center gap-5 text-sm md:ml-0">
             {currentUser ? (
@@ -64,7 +73,7 @@ export default function Layout() {
                 </button>
               </>
             ) : (
-              <button type="button" onClick={() => setSignInOpen(true)} className="btn btn-secondary">
+              <button type="button" onClick={openSignIn} className="btn btn-secondary">
                 Sign in
               </button>
             )}
@@ -72,7 +81,7 @@ export default function Layout() {
         </div>
 
         {/* category row */}
-        <div className="mx-auto max-w-5xl overflow-x-auto px-4">
+        <SignInGate active={signedOut} onBlocked={openSignIn} className="mx-auto max-w-5xl overflow-x-auto px-4">
           <nav className="flex gap-5 pb-2 text-sm whitespace-nowrap">
             <Link to="/" className={linkClass({ isActive: pathname === "/" && !activeCategory && !query })}>
               All
@@ -83,7 +92,7 @@ export default function Layout() {
               </Link>
             ))}
           </nav>
-        </div>
+        </SignInGate>
       </header>
 
       {/* key: signing in or out starts each page fresh (e.g. distance from your own dorm) */}

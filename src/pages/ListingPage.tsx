@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Link, useNavigate, useParams } from "react-router";
 import ListingPhoto from "../components/ListingPhoto.tsx";
 import { useLayout } from "../components/layoutContext.ts";
-import { getPlace } from "../data/places.ts";
+import { getCampus, getPlace } from "../data/places.ts";
 import { useStore } from "../data/storeContext.ts";
 import { formatDistance, milesBetween } from "../lib/distance.ts";
 import { formatPrice } from "../lib/format.ts";
@@ -81,8 +81,8 @@ export default function ListingPage() {
           <h1 className="text-2xl font-bold">{listing.title}</h1>
           <p className="mt-1 text-xl font-semibold">{formatPrice(listing.priceCents)}</p>
           <p className="mt-2 text-sm text-gray-600">
-            {listing.location}
-            {currentUser && ` · ${formatDistance(milesBetween(getPlace(currentUser.dorm), getPlace(listing.location)))} from your dorm`}
+            {listing.location}, {getCampus(getPlace(listing.location).campusId)?.name}
+            {currentUser?.dorm && ` · ${formatDistance(milesBetween(getPlace(currentUser.dorm), getPlace(listing.location)))} from your dorm`}
           </p>
           <p className="text-sm text-gray-600">
             {listing.category} · Seller: {seller?.name} (verified student)

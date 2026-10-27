@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router";
 import { categories } from "../data/categories.ts";
-import { places } from "../data/places.ts";
+import { campusForEmail, campuses, placesOnCampus } from "../data/places.ts";
 import type { Category } from "../types.ts";
 import { useMe, useStore } from "../data/storeContext.ts";
 
@@ -10,9 +10,13 @@ export default function CreateListingPage() {
   const me = useMe();
   const navigate = useNavigate();
 
+  // you can only sell on the campus your .edu email belongs to
+  const campus = campusForEmail(me.email);
+  const myHalls = campus ? placesOnCampus(campus.id) : [];
+
   const [title, setTitle] = useState("");
   const [price, setPrice] = useState(""); // dollars, as typed
-  const [location, setLocation] = useState(me.dorm);
+  const [location, setLocation] = useState(myHalls.some((p) => p.name === me.dorm) ? me.dorm : myHalls[0]?.name);
   const [category, setCategory] = useState<Category>("Furniture");
   const [description, setDescription] = useState("");
   const [photoUrl, setPhotoUrl] = useState<string | undefined>(undefined);
@@ -28,15 +32,31 @@ export default function CreateListingPage() {
       setError("Enter a price (0 if it's free).");
       return;
     }
-    const listing = createListing({
-      title: title.trim(),
-      priceCents: Math.round(dollars * 100),
-      location,
-      category,
-      description: description.trim(),
-      photoUrl,
-    });
-    navigate(`/listings/${listing.id}`);
+    try {
+      const listing = createListing({
+        title: title.trim(),
+        priceCents: Math.round(dollars * 100),
+        location: location ?? "",
+        category,
+        description: description.trim(),
+        photoUrl,
+      });
+      navigate(`/listings/${listing.id}`);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Something went wrong.");
+    }
+  }
+
+  if (!campus) {
+    return (
+      <div className="max-w-lg">
+        <h1 className="text-2xl font-bold">Sell an item</h1>
+        <p className="mt-3 text-gray-600">
+          You can only sell on your own campus, and your school isn't on Campus Circulate yet. Right now that's{" "}
+          {campuses.map((c) => c.name).join(", ")}. You can still buy from any campus.
+        </p>
+      </div>
+    );
   }
 
   return (
@@ -97,10 +117,10 @@ export default function CreateListingPage() {
         </div>
         <div>
           <label className="label" htmlFor="location">
-            Pickup spot
+            Pickup spot at {campus.name}
           </label>
           <select id="location" value={location} onChange={(event) => setLocation(event.target.value)} className="field">
-            {places.map((place) => (
+            {myHalls.map((place) => (
               <option key={place.name}>{place.name}</option>
             ))}
           </select>

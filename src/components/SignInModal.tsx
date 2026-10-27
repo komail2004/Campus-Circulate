@@ -1,15 +1,27 @@
 import { useEffect, useState } from "react";
 import { isEduEmail } from "../data/actions.ts";
+import { campusForEmail, campuses, placesOnCampus } from "../data/places.ts";
 import { useStore } from "../data/storeContext.ts";
 import { makeCode } from "../lib/ids.ts";
 
-// Pop-up sign in. Two steps: enter your .edu email -> type the code we "emailed" you.
+type Mode = "signIn" | "signUp";
+
+// Pop-up for signing in or creating an account.
+// Two steps either way: fill in your details -> type the code we "emailed" you.
 export default function SignInModal({ onClose }: { onClose: () => void }) {
-  const { users, logIn } = useStore();
+  const { users, logIn, signUp } = useStore();
+  const [mode, setMode] = useState<Mode>("signIn");
+  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
+  const [dorm, setDorm] = useState("");
   const [sentCode, setSentCode] = useState(""); // empty until a code is "sent"
   const [code, setCode] = useState("");
   const [error, setError] = useState("");
+
+  // the dorm list follows the email: a cofc.edu email gets College of Charleston halls
+  const campus = campusForEmail(email);
+  const dormOptions = campus ? placesOnCampus(campus.id) : [];
+  const chosenDorm = dormOptions.some((p) => p.name === dorm) ? dorm : dormOptions[0]?.name;
 
   // the Escape key closes the window
   useEffect(() => {
@@ -20,13 +32,29 @@ export default function SignInModal({ onClose }: { onClose: () => void }) {
     return () => window.removeEventListener("keydown", handleKey);
   }, [onClose]);
 
+  function switchMode(next: Mode) {
+    setMode(next);
+    setSentCode("");
+    setCode("");
+    setError("");
+  }
+
   function sendCode() {
+    if (mode === "signUp" && !name.trim()) {
+      setError("Enter your name.");
+      return;
+    }
     if (!isEduEmail(email)) {
       setError("Campus Circulate is for students only. Use your .edu email.");
       return;
     }
-    if (!users.some((u) => u.email === email.trim().toLowerCase())) {
-      setError("No student account found for that email.");
+    const exists = users.some((u) => u.email === email.trim().toLowerCase());
+    if (mode === "signIn" && !exists) {
+      setError("No student account found for that email. Create an account instead.");
+      return;
+    }
+    if (mode === "signUp" && exists) {
+      setError("There's already an account with that email. Sign in instead.");
       return;
     }
     setError("");
@@ -38,9 +66,12 @@ export default function SignInModal({ onClose }: { onClose: () => void }) {
       setError("That code doesn't match.");
       return;
     }
-    logIn(email);
+    if (mode === "signUp") signUp(name, email, chosenDorm);
+    else logIn(email);
     onClose();
   }
+
+  const isSignUp = mode === "signUp";
 
   return (
     // clicking the dark background (but not the window itself) closes it
@@ -55,9 +86,14 @@ export default function SignInModal({ onClose }: { onClose: () => void }) {
           ×
         </button>
         <h2 id="sign-in-title" className="text-xl font-bold">
-          Sign in
+          {isSignUp ? "Create an account" : "Sign in"}
         </h2>
-        <p className="mt-1 text-sm text-gray-600">Students only. Use your .edu email.</p>
+        <p className="mt-1 text-sm text-gray-600">
+          {isSignUp ? "Already have an account? " : "New to Campus Circulate? "}
+          <button type="button" onClick={() => switchMode(isSignUp ? "signIn" : "signUp")} className="text-blue-700 hover:underline">
+            {isSignUp ? "Sign in" : "Create an account"}
+          </button>
+        </p>
 
         {!sentCode ? (
           <form
@@ -67,6 +103,23 @@ export default function SignInModal({ onClose }: { onClose: () => void }) {
             }}
             className="mt-5 space-y-4"
           >
+            {isSignUp && (
+              <div>
+                <label className="label" htmlFor="name">
+                  Name
+                </label>
+                <input
+                  id="name"
+                  autoFocus
+                  value={name}
+                  onChange={(event) => {
+                    setName(event.target.value);
+                    setError(""); // an old error shouldn't stick around once you fix the field
+                  }}
+                  className="field"
+                />
+              </div>
+            )}
             <div>
               <label className="label" htmlFor="email">
                 School email
@@ -74,13 +127,34 @@ export default function SignInModal({ onClose }: { onClose: () => void }) {
               <input
                 id="email"
                 type="email"
-                autoFocus
+                autoFocus={!isSignUp}
                 value={email}
-                onChange={(event) => setEmail(event.target.value)}
+                onChange={(event) => {
+                  setEmail(event.target.value);
+                  setError("");
+                }}
                 placeholder="you@school.edu"
                 className="field"
               />
             </div>
+            {isSignUp && campus && (
+              <div>
+                <label className="label" htmlFor="dorm">
+                  Your dorm at {campus.name}
+                </label>
+                <select id="dorm" value={chosenDorm} onChange={(event) => setDorm(event.target.value)} className="field">
+                  {dormOptions.map((place) => (
+                    <option key={place.name}>{place.name}</option>
+                  ))}
+                </select>
+              </div>
+            )}
+            {isSignUp && !campus && isEduEmail(email) && (
+              <p className="text-sm text-gray-600">
+                Your school isn't on Campus Circulate yet. You can still buy from {campuses.map((c) => c.name).join(", ")} students, but
+                you can't sell.
+              </p>
+            )}
             {error && <p className="text-sm text-red-600">{error}</p>}
             <button type="submit" disabled={!email.trim()} className="btn btn-primary w-full">
               Send verification code
@@ -100,7 +174,10 @@ export default function SignInModal({ onClose }: { onClose: () => void }) {
             </p>
             <input
               value={code}
-              onChange={(event) => setCode(event.target.value)}
+              onChange={(event) => {
+                setCode(event.target.value);
+                setError("");
+              }}
               inputMode="numeric"
               autoFocus
               maxLength={6}
@@ -110,7 +187,7 @@ export default function SignInModal({ onClose }: { onClose: () => void }) {
             />
             {error && <p className="text-sm text-red-600">{error}</p>}
             <button type="submit" className="btn btn-primary w-full">
-              Verify and sign in
+              {isSignUp ? "Verify and create account" : "Verify and sign in"}
             </button>
           </form>
         )}

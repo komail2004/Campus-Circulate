@@ -28,6 +28,12 @@ export default function StoreProvider({ children }: { children: ReactNode }) {
       if (!user) throw new Error("No student account found for that email.");
       setCurrentUserId(user.id);
     },
+    // Creates the account and signs straight in.
+    signUp(name, email, dorm) {
+      const result = actions.addUser(data, name, email, dorm);
+      setData(result.data);
+      setCurrentUserId(result.user.id);
+    },
     logOut() {
       setCurrentUserId(null);
     },
