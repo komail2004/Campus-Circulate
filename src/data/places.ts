@@ -28,7 +28,7 @@ export function placesOnCampus(campusId: string) {
   return places.filter((place) => place.campusId === campusId);
 }
 
-// The campus an email belongs to, or undefined if that school isn't on Campus Circulate yet.
+// The campus an email belongs to, or undefined if that school isn't on CampusCirculate yet.
 // Subdomains count too: "g.cofc.edu" belongs to "cofc.edu".
 export function campusForEmail(email: string) {
   const domain = email.trim().toLowerCase().split("@")[1] ?? "";

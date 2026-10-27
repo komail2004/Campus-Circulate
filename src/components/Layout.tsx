@@ -11,7 +11,7 @@ function linkClass({ isActive }: { isActive: boolean }) {
 }
 
 export default function Layout() {
-  const { currentUser, logOut } = useStore();
+  const { currentUser, logOut, resetDemo } = useStore();
   const [signInOpen, setSignInOpen] = useState(false);
   const [params] = useSearchParams();
   const { pathname } = useLocation();
@@ -28,12 +28,19 @@ export default function Layout() {
     navigate("/");
   }
 
+  // clears accounts, listings, and deals made while rehearsing
+  function reset() {
+    if (!window.confirm("Reset the demo? Accounts, listings, and deals made during the demo will be removed.")) return;
+    resetDemo();
+    navigate("/");
+  }
+
   return (
     <div className="min-h-dvh">
       <header className="border-b border-gray-200 bg-white">
         <div className="mx-auto flex max-w-5xl flex-wrap items-center gap-x-6 gap-y-3 px-4 py-3">
           <Link to="/" className="text-lg font-bold">
-            Campus Circulate
+            CampusCirculate
           </Link>
 
           {/* search: on phones it drops to its own row */}
@@ -67,7 +74,9 @@ export default function Layout() {
                 <NavLink to="/deals" className={linkClass}>
                   Deals
                 </NavLink>
-                <span className="text-gray-400">{currentUser.name}</span>
+                <NavLink to="/account" className={linkClass} title="My account and listings">
+                  {currentUser.name}
+                </NavLink>
                 <button type="button" onClick={signOut} className="text-gray-600 hover:text-gray-900">
                   Sign out
                 </button>
@@ -99,6 +108,12 @@ export default function Layout() {
       <main key={currentUser?.id ?? "guest"} className="mx-auto max-w-5xl px-4 py-6">
         <Outlet context={context} />
       </main>
+
+      <footer className="mx-auto max-w-5xl px-4 pt-4 pb-8 text-xs text-gray-400">
+        <button type="button" onClick={reset} className="hover:text-gray-700 hover:underline">
+          Reset demo data
+        </button>
+      </footer>
 
       {signInOpen && <SignInModal onClose={() => setSignInOpen(false)} />}
     </div>

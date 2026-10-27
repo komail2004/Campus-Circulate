@@ -1,6 +1,7 @@
 import { Route, Routes } from "react-router";
 import Layout from "./components/Layout.tsx";
 import RequireAuth from "./components/RequireAuth.tsx";
+import AccountPage from "./pages/AccountPage.tsx";
 import BrowsePage from "./pages/BrowsePage.tsx";
 import CreateListingPage from "./pages/CreateListingPage.tsx";
 import DealPage from "./pages/DealPage.tsx";
@@ -21,6 +22,7 @@ function App() {
           <Route path="sell" element={<CreateListingPage />} />
           <Route path="deals" element={<DealsPage />} />
           <Route path="deals/:dealId" element={<DealPage />} />
+          <Route path="account" element={<AccountPage />} />
         </Route>
 
         <Route path="*" element={<NotFoundPage />} />

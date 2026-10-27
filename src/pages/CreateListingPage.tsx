@@ -52,7 +52,7 @@ export default function CreateListingPage() {
       <div className="max-w-lg">
         <h1 className="text-2xl font-bold">Sell an item</h1>
         <p className="mt-3 text-gray-600">
-          You can only sell on your own campus, and your school isn't on Campus Circulate yet. Right now that's{" "}
+          You can only sell on your own campus, and your school isn't on CampusCirculate yet. Right now that's{" "}
           {campuses.map((c) => c.name).join(", ")}. You can still buy from any campus.
         </p>
       </div>

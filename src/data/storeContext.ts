@@ -14,6 +14,7 @@ export type Store = Data & {
   buyListing: (listingId: string) => Deal;
   sendMessage: (dealId: string, text: string) => void;
   confirmHandoff: (dealId: string, code: string) => void;
+  resetDemo: () => void;
 };
 
 export const StoreContext = createContext<Store | null>(null);

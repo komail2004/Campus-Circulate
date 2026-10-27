@@ -45,7 +45,7 @@ export default function SignInModal({ onClose }: { onClose: () => void }) {
       return;
     }
     if (!isEduEmail(email)) {
-      setError("Campus Circulate is for students only. Use your .edu email.");
+      setError("CampusCirculate is for students only. Use your .edu email.");
       return;
     }
     const exists = users.some((u) => u.email === email.trim().toLowerCase());
@@ -89,7 +89,7 @@ export default function SignInModal({ onClose }: { onClose: () => void }) {
           {isSignUp ? "Create an account" : "Sign in"}
         </h2>
         <p className="mt-1 text-sm text-gray-600">
-          {isSignUp ? "Already have an account? " : "New to Campus Circulate? "}
+          {isSignUp ? "Already have an account? " : "New to CampusCirculate? "}
           <button type="button" onClick={() => switchMode(isSignUp ? "signIn" : "signUp")} className="text-blue-700 hover:underline">
             {isSignUp ? "Sign in" : "Create an account"}
           </button>
@@ -151,7 +151,7 @@ export default function SignInModal({ onClose }: { onClose: () => void }) {
             )}
             {isSignUp && !campus && isEduEmail(email) && (
               <p className="text-sm text-gray-600">
-                Your school isn't on Campus Circulate yet. You can still buy from {campuses.map((c) => c.name).join(", ")} students, but
+                Your school isn't on CampusCirculate yet. You can still buy from {campuses.map((c) => c.name).join(", ")} students, but
                 you can't sell.
               </p>
             )}

@@ -1,18 +1,54 @@
-// Holds the app's data in memory and shares it with every page.
+// Holds the app's data and shares it with every page.
 // Pages call these functions (store.buyListing(...), etc.) instead of changing
-// data directly. There's no database: the data survives logging out and back
-// in, but refreshing the page resets the demo.
+// data directly. There's no database: the data is saved in this browser
+// (localStorage) so a refresh doesn't wipe the demo. "Reset demo data" starts over.
 // Later, Firebase calls go inside these same functions.
 
-import { useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import * as actions from "./actions.ts";
 import { fakeListings } from "./fakeListings.ts";
 import { fakeUsers } from "./fakeUsers.ts";
 import { StoreContext, type Store } from "./storeContext.ts";
 
+type Saved = { data: actions.Data; currentUserId: string | null };
+
+// The save slot's name changes whenever fakeUsers or fakeListings is edited,
+// so edits to the starting data show up instead of an old saved copy.
+const SEED_VERSION = [...JSON.stringify([fakeUsers, fakeListings])].reduce((hash, ch) => (hash * 31 + ch.charCodeAt(0)) | 0, 0);
+const SAVE_KEY = `campus-circulate-demo-${SEED_VERSION}`;
+
+function freshStart(): Saved {
+  return { data: { users: fakeUsers, listings: fakeListings, deals: [] }, currentUserId: null };
+}
+
+function loadSaved(): Saved {
+  try {
+    const text = localStorage.getItem(SAVE_KEY);
+    if (text) return JSON.parse(text) as Saved;
+  } catch {
+    // storage blocked or unreadable: start fresh
+  }
+  return freshStart();
+}
+
 export default function StoreProvider({ children }: { children: ReactNode }) {
-  const [data, setData] = useState<actions.Data>({ users: fakeUsers, listings: fakeListings, deals: [] });
-  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [state, setState] = useState(() => ({ key: SAVE_KEY, ...loadSaved() }));
+
+  // If the starting data was edited while the app is open, switch to the new save slot.
+  if (state.key !== SAVE_KEY) setState({ key: SAVE_KEY, ...loadSaved() });
+
+  const { data, currentUserId } = state;
+  const setData = (next: actions.Data) => setState((s) => ({ ...s, data: next }));
+  const setCurrentUserId = (id: string | null) => setState((s) => ({ ...s, currentUserId: id }));
+
+  // save after every change
+  useEffect(() => {
+    try {
+      localStorage.setItem(state.key, JSON.stringify({ data: state.data, currentUserId: state.currentUserId }));
+    } catch {
+      // storage full or blocked: the demo still works, it just won't survive a refresh
+    }
+  }, [state]);
 
   function myId() {
     if (!currentUserId) throw new Error("Please log in first.");
@@ -53,6 +89,11 @@ export default function StoreProvider({ children }: { children: ReactNode }) {
     },
     confirmHandoff(dealId, code) {
       setData(actions.confirmHandoff(data, dealId, myId(), code));
+    },
+
+    // Back to the starting accounts and listings, signed out.
+    resetDemo() {
+      setState({ key: SAVE_KEY, ...freshStart() });
     },
   };
 
