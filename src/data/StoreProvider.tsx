@@ -91,6 +91,11 @@ export default function StoreProvider({ children }: { children: ReactNode }) {
       setData(actions.confirmHandoff(data, dealId, myId(), code));
     },
 
+    demoSwitchUser(id) {
+      // Class rehearsal only: never use as production authentication.
+      if (!fakeUsers.some(user => user.id === id)) throw new Error("Not a sample account.");
+      setCurrentUserId(id);
+    },
     // Back to the starting accounts and listings, signed out.
     resetDemo() {
       setState({ key: SAVE_KEY, ...freshStart() });
