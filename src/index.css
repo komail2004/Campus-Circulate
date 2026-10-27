@@ -1,1 +1,29 @@
 @import "tailwindcss";
+
+@layer base {
+  body {
+    @apply bg-gray-50 text-gray-900;
+  }
+}
+
+/* Reusable building blocks, used as plain class names (className="btn btn-primary"). */
+@layer components {
+  .btn {
+    @apply inline-block rounded border px-4 py-2 text-sm font-medium disabled:opacity-50;
+  }
+  .btn-primary {
+    @apply border-blue-700 bg-blue-700 text-white hover:bg-blue-800;
+  }
+  .btn-secondary {
+    @apply border-gray-300 bg-white text-gray-900 hover:bg-gray-50;
+  }
+  .field {
+    @apply w-full rounded border border-gray-300 bg-white px-3 py-2 text-sm focus:border-blue-700 focus:outline-none;
+  }
+  .label {
+    @apply mb-1 block text-sm font-medium text-gray-700;
+  }
+  .card {
+    @apply rounded border border-gray-200 bg-white;
+  }
+}
