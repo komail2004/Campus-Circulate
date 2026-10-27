@@ -9,7 +9,7 @@ type Mode = "signIn" | "signUp";
 // Pop-up for signing in or creating an account.
 // Two steps either way: fill in your details -> type the code we "emailed" you.
 export default function SignInModal({ onClose }: { onClose: () => void }) {
-  const { users, logIn, signUp } = useStore();
+  const { users, logIn, signUp, demoSwitchUser } = useStore();
   const [mode, setMode] = useState<Mode>("signIn");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -94,6 +94,19 @@ export default function SignInModal({ onClose }: { onClose: () => void }) {
             {isSignUp ? "Sign in" : "Create an account"}
           </button>
         </p>
+
+        <div className="mt-5 rounded-lg border border-amber-200 bg-amber-50 p-3">
+          <p className="text-sm font-semibold text-amber-950">Try the full class demo</p>
+          <p className="mt-1 text-xs text-amber-900">No password or email needed. Both students share the sample listings, messages and simulated transactions in this browser.</p>
+          <div className="mt-3 grid gap-2 sm:grid-cols-2">
+            <button type="button" className="btn btn-primary text-sm" onClick={() => { demoSwitchUser("u1"); onClose(); }}>
+              Demo buyer — William
+            </button>
+            <button type="button" className="btn btn-secondary text-sm" onClick={() => { demoSwitchUser("u2"); onClose(); }}>
+              Demo seller — Bob
+            </button>
+          </div>
+        </div>
 
         {!sentCode ? (
           <form
