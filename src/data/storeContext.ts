@@ -14,6 +14,7 @@ export type Store = Data & {
   buyListing: (listingId: string) => Deal;
   sendMessage: (dealId: string, text: string) => void;
   confirmHandoff: (dealId: string, code: string) => void;
+  demoSwitchUser: (id: string) => void;
   resetDemo: () => void;
 };
 

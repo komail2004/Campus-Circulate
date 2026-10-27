@@ -22,6 +22,31 @@ export default function CreateListingPage() {
   const [photoUrl, setPhotoUrl] = useState<string | undefined>(undefined);
   const [error, setError] = useState("");
 
+  async function choosePhoto(file?: File) {
+    if (!file) { setPhotoUrl(undefined); return; }
+    if (!file.type.startsWith("image/") || file.size > 12 * 1024 * 1024) {
+      setError("Choose an image under 12 MB."); return;
+    }
+    const url = URL.createObjectURL(file);
+    try {
+      const image = new Image();
+      await new Promise<void>((resolve, reject) => {
+        image.onload = () => resolve();
+        image.onerror = () => reject(new Error("Image could not be read."));
+        image.src = url;
+      });
+      const scale = Math.min(1, 800 / Math.max(image.width, image.height));
+      const canvas = document.createElement("canvas");
+      canvas.width = Math.max(1, Math.round(image.width * scale));
+      canvas.height = Math.max(1, Math.round(image.height * scale));
+      canvas.getContext("2d")?.drawImage(image, 0, 0, canvas.width, canvas.height);
+      const data = canvas.toDataURL("image/jpeg", 0.55);
+      if (data.length > 350000) throw new Error("Photo is too large for demo storage. Choose a smaller one.");
+      setPhotoUrl(data);
+      setError("");
+    } catch (e) { setError(e instanceof Error ? e.message : "Could not load photo."); }
+    finally { URL.revokeObjectURL(url); }
+  }
   function submit() {
     const dollars = Number(price);
     if (title.trim().length < 3) {
@@ -78,9 +103,7 @@ export default function CreateListingPage() {
             type="file"
             accept="image/*"
             onChange={(event) => {
-              const file = event.target.files?.[0];
-              // a temporary link to the picked file; it works until the page is refreshed
-              setPhotoUrl(file ? URL.createObjectURL(file) : undefined);
+              void choosePhoto(event.target.files?.[0]);
             }}
             className="block w-full text-sm text-gray-600 file:mr-3 file:rounded file:border file:border-gray-300 file:bg-white file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-gray-900 hover:file:bg-gray-50"
           />

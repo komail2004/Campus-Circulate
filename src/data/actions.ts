@@ -38,6 +38,7 @@ export function createListing(
   const place = places.find((p) => p.name === input.location);
   if (place?.campusId !== campus.id) throw new Error(`You can only sell on your own campus (${campus.name}).`);
 
+  if (!Number.isSafeInteger(input.priceCents) || input.priceCents < 0 || input.priceCents > 100000000) throw new Error("Enter a valid price.");
   const listing: Listing = { ...input, id: makeId("l"), sellerId, status: "active" };
   return { data: { ...data, listings: [listing, ...data.listings] }, listing };
 }
@@ -64,6 +65,9 @@ export function buyListing(data: Data, listingId: string, buyerId: string) {
 }
 
 export function sendMessage(data: Data, dealId: string, senderId: string, text: string): Data {
+  const deal = data.deals.find(d => d.id === dealId);
+  if (!deal || (deal.buyerId !== senderId && deal.sellerId !== senderId)) throw new Error("Not a participant in this deal.");
+  if (!text.trim() || text.trim().length > 1000) throw new Error("Message must be 1–1000 characters.");
   const message = { id: makeId("m"), senderId, text: text.trim() };
   const deals = data.deals.map((d): Deal => (d.id === dealId ? { ...d, messages: [...d.messages, message] } : d));
   return { ...data, deals };
@@ -75,6 +79,7 @@ export function confirmHandoff(data: Data, dealId: string, sellerId: string, cod
   const deal = data.deals.find((d) => d.id === dealId);
   if (!deal) throw new Error("That deal doesn't exist.");
   if (deal.sellerId !== sellerId) throw new Error("Only the seller can confirm the handoff.");
+  if (deal.status !== "held") throw new Error("This handoff has already completed.");
   if (code.trim() !== deal.handoffCode) throw new Error("That code doesn't match. Ask the buyer to read it again.");
 
   const deals = data.deals.map((d): Deal => (d.id === dealId ? { ...d, status: "released" } : d));

@@ -11,7 +11,7 @@ function linkClass({ isActive }: { isActive: boolean }) {
 }
 
 export default function Layout() {
-  const { currentUser, logOut, resetDemo } = useStore();
+  const { currentUser, logOut, resetDemo, demoSwitchUser } = useStore();
   const [signInOpen, setSignInOpen] = useState(false);
   const [params] = useSearchParams();
   const { pathname } = useLocation();
@@ -104,6 +104,18 @@ export default function Layout() {
         </SignInGate>
       </header>
 
+      <div className="mx-auto flex max-w-5xl flex-wrap items-center gap-2 bg-amber-50 px-4 py-2 text-xs text-amber-900">
+        <strong>Class demo</strong>
+        <span>Sample accounts · simulated payments · data saved on this browser</span>
+        <label className="ml-auto flex items-center gap-2">
+          <span>Act as:</span>
+          <select aria-label="Switch sample student" className="rounded border border-amber-300 bg-white px-2 py-1" value={currentUser?.id === "u1" || currentUser?.id === "u2" ? currentUser.id : ""} onChange={e => { if(e.target.value) { demoSwitchUser(e.target.value); navigate("/"); } }}>
+            <option value="">Select a student</option>
+            <option value="u1">William Baldwin (buyer)</option>
+            <option value="u2">Bob Smith (seller)</option>
+          </select>
+        </label>
+      </div>
       {/* key: signing in or out starts each page fresh (e.g. distance from your own dorm) */}
       <main key={currentUser?.id ?? "guest"} className="mx-auto max-w-5xl px-4 py-6">
         <Outlet context={context} />
