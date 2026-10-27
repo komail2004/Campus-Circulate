@@ -1,4 +1,5 @@
 import { Link } from "react-router";
+import { useStore } from "../data/storeContext.ts";
 import { formatDistance } from "../lib/distance.ts";
 import { formatPrice } from "../lib/format.ts";
 import type { Listing } from "../types.ts";
@@ -6,8 +7,11 @@ import ListingPhoto from "./ListingPhoto.tsx";
 
 // `distance` is optional: My account shows your own listings without one.
 export default function ListingCard({ listing, distance }: { listing: Listing; distance?: number }) {
+  const { currentUser } = useStore();
+  const canBuy = !!currentUser && currentUser.id !== listing.sellerId && listing.status === "active";
   return (
-    <Link to={`/listings/${listing.id}`} className="card block overflow-hidden hover:border-gray-400">
+    <div className="card overflow-hidden">
+    <Link to={`/listings/${listing.id}`} className="block hover:bg-gray-50">
       <ListingPhoto src={listing.photoUrl} alt={listing.title} className="aspect-[4/3] w-full object-cover" />
       <div className="p-3">
         <p className="font-semibold">{formatPrice(listing.priceCents)}</p>
@@ -20,5 +24,13 @@ export default function ListingCard({ listing, distance }: { listing: Listing; d
         {listing.status === "sold" && <p className="mt-1 text-xs font-medium text-green-700">Sold</p>}
       </div>
     </Link>
+    {canBuy && (
+      <div className="px-3 pb-3">
+        <Link to={`/listings/${listing.id}`} className="btn btn-primary block text-center text-sm">
+          {listing.priceCents > 0 ? `Buy for ${formatPrice(listing.priceCents)}` : "Reserve for free"}
+        </Link>
+      </div>
+    )}
+    </div>
   );
 }
