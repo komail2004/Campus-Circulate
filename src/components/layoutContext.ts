@@ -2,7 +2,11 @@
 
 import { useOutletContext } from "react-router";
 
-export type LayoutContext = { openSignIn: () => void };
+export type LayoutContext = {
+  openSignIn: () => void;
+  theme: "light" | "dark";
+  toggleTheme: () => void;
+};
 
 export function useLayout() {
   return useOutletContext<LayoutContext>();

@@ -27,3 +27,102 @@
     @apply rounded border border-gray-200 bg-white;
   }
 }
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+}
+
+:root[data-theme="dark"] body {
+  background-color: #111827;
+  color: #f3f4f6;
+}
+
+:root[data-theme="dark"] .bg-white,
+:root[data-theme="dark"] .field,
+:root[data-theme="dark"] .btn-secondary,
+:root[data-theme="dark"] .card {
+  background-color: #1f2937;
+}
+
+:root[data-theme="dark"] .bg-gray-50,
+:root[data-theme="dark"] .hover\:bg-gray-50:hover {
+  background-color: #111827;
+}
+
+:root[data-theme="dark"] .bg-gray-100 {
+  background-color: #374151;
+}
+
+:root[data-theme="dark"] .text-gray-900,
+:root[data-theme="dark"] .hover\:text-gray-900:hover,
+:root[data-theme="dark"] .file\:text-gray-900::file-selector-button {
+  color: #f9fafb;
+}
+
+:root[data-theme="dark"] .text-gray-700,
+:root[data-theme="dark"] .label {
+  color: #d1d5db;
+}
+
+:root[data-theme="dark"] .text-gray-600,
+:root[data-theme="dark"] .text-gray-500 {
+  color: #9ca3af;
+}
+
+:root[data-theme="dark"] .text-gray-400,
+:root[data-theme="dark"] .hover\:text-gray-700:hover {
+  color: #9ca3af;
+}
+
+:root[data-theme="dark"] .border-gray-200,
+:root[data-theme="dark"] .border-gray-300,
+:root[data-theme="dark"] .field,
+:root[data-theme="dark"] .btn-secondary {
+  border-color: #4b5563;
+}
+
+:root[data-theme="dark"] .file\:bg-white::file-selector-button {
+  background-color: #1f2937;
+}
+
+:root[data-theme="dark"] .file\:border-gray-300::file-selector-button {
+  border-color: #4b5563;
+}
+
+:root[data-theme="dark"] .hover\:file\:bg-gray-50:hover::file-selector-button {
+  background-color: #111827;
+}
+
+:root[data-theme="dark"] .hover\:border-gray-400:hover {
+  border-color: #6b7280;
+}
+
+:root[data-theme="dark"] .text-blue-700 {
+  color: #93c5fd;
+}
+
+:root[data-theme="dark"] .bg-amber-50 {
+  background-color: #422006;
+}
+
+:root[data-theme="dark"] .border-amber-200,
+:root[data-theme="dark"] .border-amber-300 {
+  border-color: #92400e;
+}
+
+:root[data-theme="dark"] .text-amber-950,
+:root[data-theme="dark"] .text-amber-900 {
+  color: #fde68a;
+}
+
+:root[data-theme="dark"] .text-amber-700 {
+  color: #fcd34d;
+}
+
+:root[data-theme="dark"] .text-green-700 {
+  color: #86efac;
+}
+
+:root[data-theme="dark"] .text-red-600 {
+  color: #fca5a5;
+}

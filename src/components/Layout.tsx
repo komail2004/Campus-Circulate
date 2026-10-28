@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, NavLink, Outlet, useLocation, useNavigate, useSearchParams } from "react-router";
 import { categories } from "../data/categories.ts";
 import { useStore } from "../data/storeContext.ts";
@@ -13,6 +13,9 @@ function linkClass({ isActive }: { isActive: boolean }) {
 export default function Layout() {
   const { currentUser, logOut, resetDemo, demoSwitchUser } = useStore();
   const [signInOpen, setSignInOpen] = useState(false);
+  const [theme, setTheme] = useState<"light" | "dark">(() =>
+    window.localStorage.getItem("campus-circulate-theme") === "dark" ? "dark" : "light",
+  );
   const [params] = useSearchParams();
   const { pathname } = useLocation();
   const navigate = useNavigate();
@@ -21,7 +24,13 @@ export default function Layout() {
   const query = params.get("q") ?? "";
   const activeCategory = pathname === "/" ? params.get("category") : null;
   const openSignIn = () => setSignInOpen(true);
-  const context: LayoutContext = { openSignIn };
+  const toggleTheme = () => setTheme((current) => (current === "dark" ? "light" : "dark"));
+  const context: LayoutContext = { openSignIn, theme, toggleTheme };
+
+  useEffect(() => {
+    document.documentElement.dataset.theme = theme;
+    window.localStorage.setItem("campus-circulate-theme", theme);
+  }, [theme]);
 
   function signOut() {
     logOut();
