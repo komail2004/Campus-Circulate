@@ -10,7 +10,7 @@ export default function ListingCard({ listing, distance }: { listing: Listing; d
   const { currentUser } = useStore();
   const canBuy = !!currentUser && currentUser.id !== listing.sellerId && listing.status === "active";
   return (
-    <div className="card overflow-hidden">
+    <div className="card listing-card result-card overflow-hidden">
     <Link to={`/listings/${listing.id}`} className="block hover:bg-gray-50">
       <ListingPhoto src={listing.photoUrl} alt={listing.title} className="aspect-[4/3] w-full object-cover" />
       <div className="p-3">

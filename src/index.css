@@ -26,6 +26,21 @@
   .card {
     @apply rounded border border-gray-200 bg-white;
   }
+  .listing-card {
+    border-color: #d1d5db;
+  }
+  .result-card {
+    transition:
+      background-color 150ms ease,
+      border-color 150ms ease,
+      box-shadow 150ms ease;
+  }
+  .result-card:hover,
+  .result-card:focus-within {
+    background-color: #f9fafb;
+    border-color: #d1d5db;
+    box-shadow: 0 2px 6px rgb(17 24 39 / 8%);
+  }
 }
 
 :root[data-theme="dark"] {
@@ -44,9 +59,20 @@
   background-color: #1f2937;
 }
 
+:root[data-theme="dark"] .listing-card {
+  border-color: #4b5563;
+}
+
 :root[data-theme="dark"] .bg-gray-50,
 :root[data-theme="dark"] .hover\:bg-gray-50:hover {
   background-color: #111827;
+}
+
+:root[data-theme="dark"] .result-card:hover,
+:root[data-theme="dark"] .result-card:focus-within {
+  background-color: #293548;
+  border-color: #6b7280;
+  box-shadow: 0 2px 6px rgb(0 0 0 / 20%);
 }
 
 :root[data-theme="dark"] .bg-gray-100 {

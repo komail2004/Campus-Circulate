@@ -18,7 +18,7 @@ export default function DealsPage() {
           const iAmBuyer = deal.buyerId === me.id;
           const other = users.find((u) => u.id === (iAmBuyer ? deal.sellerId : deal.buyerId));
           return (
-            <Link key={deal.id} to={`/deals/${deal.id}`} className="card flex items-center justify-between gap-4 p-4 hover:border-gray-400">
+            <Link key={deal.id} to={`/deals/${deal.id}`} className="card result-card flex items-center justify-between gap-4 p-4">
               <div>
                 <p className="font-semibold">{listing?.title}</p>
                 <p className="text-sm text-gray-600">
