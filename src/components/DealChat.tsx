@@ -49,7 +49,7 @@ export default function DealChat({ deal }: { deal: Deal }) {
         className="flex gap-2 border-t border-gray-200 p-2"
       >
         <input value={draft} onChange={(event) => setDraft(event.target.value)} placeholder="Write a message" className="field" />
-        <button type="submit" disabled={!draft.trim()} className="btn btn-primary">
+        <button type="submit" disabled={!draft.trim()} className="btn btn-cardinal">
           Send
         </button>
       </form>

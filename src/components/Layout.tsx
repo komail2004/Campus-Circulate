@@ -46,9 +46,9 @@ export default function Layout() {
 
   return (
     <div className="min-h-dvh">
-      <header className="border-b border-gray-200 bg-white">
+      <header className="site-header border-b border-gray-200 bg-white">
         <div className="mx-auto flex max-w-5xl flex-wrap items-center gap-x-6 gap-y-3 px-4 py-3">
-          <Link to="/" className="text-lg font-bold">
+          <Link to="/" className="site-title text-lg font-bold">
             CampusCirculate
           </Link>
 
@@ -91,7 +91,7 @@ export default function Layout() {
                 </button>
               </>
             ) : (
-              <button type="button" onClick={openSignIn} className="btn btn-secondary">
+              <button type="button" onClick={openSignIn} className="btn btn-cardinal">
                 Sign in
               </button>
             )}

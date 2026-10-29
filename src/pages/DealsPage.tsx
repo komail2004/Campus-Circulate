@@ -22,7 +22,8 @@ export default function DealsPage() {
               <div>
                 <p className="font-semibold">{listing?.title}</p>
                 <p className="text-sm text-gray-600">
-                  {iAmBuyer ? `Buying from ${other?.name}` : `Selling to ${other?.name}`} · {formatPrice(deal.amountCents)}
+                  {iAmBuyer ? `Buying from ${other?.name}` : `Selling to ${other?.name}`} ·{" "}
+                  <span className="listing-price">{formatPrice(deal.amountCents)}</span>
                 </p>
               </div>
               <span className={`text-sm font-medium ${deal.status === "held" ? "text-amber-700" : "text-green-700"}`}>

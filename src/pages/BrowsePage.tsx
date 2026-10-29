@@ -45,7 +45,8 @@ export default function BrowsePage() {
             <p className="mt-2 text-gray-600">
               Buy, sell, and give away stuff with verified students nearby. Your payment is held until the item is in your hands.
             </p>
-            <Link to="/sell" className="btn btn-primary mt-5 self-start">
+            <span className="payment-protected mt-4 self-start rounded px-3 py-1 text-sm font-semibold">Payment protected</span>
+            <Link to="/sell" className="btn btn-primary btn-cardinal mt-5 self-start">
               Start selling
             </Link>
           </div>

@@ -14,7 +14,7 @@ export default function ListingCard({ listing, distance }: { listing: Listing; d
     <Link to={`/listings/${listing.id}`} className="block hover:bg-gray-50">
       <ListingPhoto src={listing.photoUrl} alt={listing.title} className="aspect-[4/3] w-full object-cover" />
       <div className="p-3">
-        <p className="font-semibold">{formatPrice(listing.priceCents)}</p>
+        <p className="listing-price font-semibold">{formatPrice(listing.priceCents)}</p>
         <h3 className="text-sm">{listing.title}</h3>
         <p className="mt-1 text-xs text-gray-500">
           {listing.location}
@@ -26,7 +26,7 @@ export default function ListingCard({ listing, distance }: { listing: Listing; d
     </Link>
     {canBuy && (
       <div className="px-3 pb-3">
-        <Link to={`/listings/${listing.id}`} className="btn btn-primary block text-center text-sm">
+        <Link to={`/listings/${listing.id}`} className="btn btn-primary btn-cardinal block text-center text-sm">
           {listing.priceCents > 0 ? `Buy for ${formatPrice(listing.priceCents)}` : "Reserve for free"}
         </Link>
       </div>
