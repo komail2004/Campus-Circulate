@@ -162,7 +162,7 @@ export default function ListingPage() {
               <input id="cardName" required autoComplete="off" className="field" />
             </div>
             <p className="rounded bg-gray-100 p-3 text-sm">
-              Demo: no real charge, so don't use a real card. Your {price} is held, not paid to {seller?.name}, until you give them your
+              DEMO: No real charges. Your {price} is held, not paid to {seller?.name}, until you give them your
               handoff code at the meetup.
             </p>
             <button type="submit" className="btn btn-primary w-full">
