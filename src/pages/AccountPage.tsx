@@ -2,10 +2,12 @@ import { Link } from "react-router";
 import ListingCard from "../components/ListingCard.tsx";
 import { campusForEmail } from "../data/places.ts";
 import { useMe, useStore } from "../data/storeContext.ts";
+import { useLayout } from "../components/layoutContext.ts";
 
 // Your account: who you are, and everything you've listed (including sold items).
 export default function AccountPage() {
   const { listings } = useStore();
+  const { theme, toggleTheme } = useLayout();
   const me = useMe();
   const campus = campusForEmail(me.email);
   const myListings = listings.filter((l) => l.sellerId === me.id);
@@ -21,6 +23,18 @@ export default function AccountPage() {
         {campus ? campus.name : "Your school isn't on CampusCirculate yet"}
         {me.dorm && ` · ${me.dorm}`}
       </p>
+
+      <section className="card mt-6 flex flex-wrap items-center justify-between gap-4 p-4" aria-labelledby="appearance-heading">
+        <div>
+          <h2 id="appearance-heading" className="font-semibold">
+            Appearance
+          </h2>
+          <p className="mt-1 text-sm text-gray-600">Choose a theme for CampusCirculate on this device.</p>
+        </div>
+        <button type="button" className="btn btn-secondary" aria-pressed={theme === "dark"} onClick={toggleTheme}>
+          Dark mode: {theme === "dark" ? "On" : "Off"}
+        </button>
+      </section>
 
       <div className="mt-8 flex flex-wrap items-center justify-between gap-3">
         <div>
