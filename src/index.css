@@ -1,28 +1,90 @@
 @import "tailwindcss";
 
+/* =====================================================================
+   1. TOKENS: change a color here and it changes everywhere
+   ===================================================================== */
+
+/* Brand colors + font. */
+@theme static {
+  --color-navy: #234380;
+  --color-cardinal: #8a1730;
+  --color-cardinal-dark: #741329; /* hover */
+  --color-gold: #ffc72c;
+  --color-cream: #f4edda;
+  --font-display: "Alfa Slab One", serif;
+}
+
+/* Colors that differ between light and dark (light values here). */
+:root {
+  --page: var(--color-cream);
+  --surface: #ffffff;
+  --heading: var(--color-navy);
+  --header: var(--color-navy);
+  --focus: var(--color-navy);
+  --shadow-hover: 0 2px 6px rgb(17 24 39 / 8%);
+}
+
+/* Expose them as utilities: bg-page, bg-surface, text-heading, bg-header, border-focus */
+@theme inline {
+  --color-page: var(--page);
+  --color-surface: var(--surface);
+  --color-heading: var(--heading);
+  --color-header: var(--header);
+  --color-focus: var(--focus);
+}
+
+/* =====================================================================
+   2. DARK MODE
+   ===================================================================== */
+:root[data-theme="dark"] {
+  color-scheme: dark;
+
+  --page: #0e1524; 
+  --surface: #16213a;
+  --heading: var(--color-cream);
+  --header: #16213a;
+  --focus: var(--color-gold);
+  --shadow-hover: 0 2px 6px rgb(0 0 0 / 20%);
+
+  --color-gray-50: #111827;
+  --color-gray-100: #374151;
+  --color-gray-200: #4b5563;
+  --color-gray-300: #4b5563;
+  --color-gray-400: #9ca3af;
+  --color-gray-500: #9ca3af;
+  --color-gray-600: #9ca3af;
+  --color-gray-700: #d1d5db;
+  --color-gray-900: #f9fafb;
+
+  --color-blue-700: #93c5fd;
+  --color-amber-50: #422006;
+  --color-amber-200: #92400e;
+  --color-amber-300: #92400e;
+  --color-amber-700: #fcd34d;
+  --color-amber-900: #fde68a;
+  --color-amber-950: #fde68a;
+  --color-green-700: #86efac;
+  --color-red-600: #fca5a5;
+}
+
+/* =====================================================================
+   3. BASE + COMPONENTS
+   ===================================================================== */
 @layer base {
   body {
-    @apply bg-gray-50 text-gray-900;
-  }
-  :root:not([data-theme="dark"]) body {
-    @apply bg-[#f4edda];
+    @apply bg-page text-gray-900;
   }
 
-  :root:not([data-theme="dark"]) main :is(h1, h2, h3),
-  :root:not([data-theme="dark"]) main .listing-card h3,
-  :root:not([data-theme="dark"]) main .result-card > div > .font-semibold {
-    @apply text-[#234380];
+  main :is(h1, h2, h3, h4, h5, h6),
+  main .listing-card h3,
+  main .result-card > div > .font-semibold {
+    @apply text-heading;
   }
 
-  h1,
-  h2,
-  h3,
-  h4,
-  h5,
-  h6,
+  h1, h2, h3, h4, h5, h6,
   .site-title,
   .listing-price {
-    @apply font-["Alfa_Slab_One",serif] tracking-[0.04em];
+    @apply font-display tracking-[0.04em];
   }
 }
 
@@ -31,186 +93,66 @@
   .btn {
     @apply inline-block rounded border px-4 py-2 text-sm font-medium disabled:opacity-50;
   }
-  .btn-primary {
-    @apply border-blue-700 bg-blue-700 text-white hover:bg-blue-800;
-  }
+  .btn-primary,
   .btn-cardinal {
-    @apply border-[#8a1730] bg-[#8a1730] text-white hover:bg-[#741329];
+    @apply border-cardinal bg-cardinal text-white hover:bg-cardinal-dark;
   }
   .btn-secondary {
-    @apply border-gray-300 bg-white text-gray-900 hover:bg-gray-50;
+    @apply border-gray-300 bg-surface text-gray-900 hover:bg-gray-50;
   }
   .field {
-    @apply w-full rounded border border-gray-300 bg-white px-3 py-2 text-sm focus:border-blue-700 focus:outline-none;
+    @apply w-full rounded border border-gray-300 bg-surface px-3 py-2 text-sm text-gray-900 focus:border-focus focus:outline-none;
   }
   .label {
     @apply mb-1 block text-sm font-medium text-gray-700;
   }
   .card {
-    @apply rounded border border-gray-200 bg-white;
+    @apply rounded border border-gray-200 bg-surface;
   }
   .listing-card {
-    @apply border-[#d1d5db];
+    @apply border-gray-300;
   }
   .listing-price {
-    @apply inline-block rounded bg-[#ffc72c] px-1.5 py-0.5 text-[#234380];
+    @apply inline-block rounded bg-gold px-1.5 py-0.5 text-navy;
   }
   .payment-protected {
-    @apply bg-[#ffc72c] text-[#234380];
+    @apply bg-gold text-navy;
   }
   .result-card {
     @apply transition-[background-color,border-color,box-shadow] duration-150 ease-[ease];
   }
   .result-card:hover,
   .result-card:focus-within {
-    @apply bg-gray-50 border-[#d1d5db] shadow-[0_2px_6px_rgb(17_24_39_/_8%)];
+    @apply border-gray-300 bg-gray-50;
+    box-shadow: var(--shadow-hover);
   }
 }
 
-:root:not([data-theme="dark"]) .site-header {
-  @apply border-[#234380] bg-[#234380] text-white;
+/* =====================================================================
+   4. SMALL ONE-OFFS
+   ===================================================================== */
+.site-header {
+  @apply border-header bg-header text-white;
+
+  /* varsity stripe along the bottom edge: cardinal, cream, gold */
+  background-image: linear-gradient(
+    to bottom,
+    var(--color-cardinal) 0 3px,
+    var(--color-cream) 3px 4px,
+    var(--color-gold) 4px 5px
+  );
+  background-repeat: no-repeat;
+  background-size: 100% 5px;
+  background-position: bottom;
 }
 
-:root:not([data-theme="dark"]) .site-header a,
-:root:not([data-theme="dark"]) .site-header button:not(.btn-secondary) {
+.site-header :is(a, button:not(.btn-secondary)) {
   @apply text-white;
 }
-
-:root:not([data-theme="dark"]) .site-header .btn-primary {
-  @apply border-[#8a1730] bg-[#8a1730] text-white hover:bg-[#741329];
-}
-
 :root:not([data-theme="dark"]) .site-header .btn-secondary {
-  @apply border-white bg-white text-[#234380];
-}
-
-:root:not([data-theme="dark"]) .site-header .field {
-  @apply border-white bg-white text-gray-900;
-}
-
-:root[data-theme="dark"] {
-  @apply scheme-dark;
-}
-
-:root[data-theme="dark"] body {
-  @apply bg-black text-[#f3f4f6];
-}
-
-:root[data-theme="dark"] main :is(h1, h2, h3, h4, h5, h6) {
-  @apply text-[#f4edda];
-}
-
-:root[data-theme="dark"] .bg-white,
-:root[data-theme="dark"] .field,
-:root[data-theme="dark"] .btn-secondary,
-:root[data-theme="dark"] .card {
-  @apply bg-[#1f2937];
-}
-
-:root[data-theme="dark"] .card {
-  @apply bg-[#16213A];
-}
-
-:root[data-theme="dark"] .site-header {
-  @apply bg-[#16213A];
-}
-
-:root[data-theme="dark"] .site-header .btn-primary {
-  @apply border-[#8a1730] bg-[#8a1730] text-white hover:bg-[#741329];
+  @apply border-white bg-white text-navy;
 }
 
 :root[data-theme="dark"] [aria-labelledby="appearance-heading"] button[aria-pressed="true"] {
-  @apply text-[#f4edda];
-}
-
-:root[data-theme="dark"] .listing-card {
-  @apply border-[#4b5563];
-}
-
-:root[data-theme="dark"] .bg-gray-50,
-:root[data-theme="dark"] .hover\:bg-gray-50:hover {
-  @apply bg-[#111827];
-}
-
-:root[data-theme="dark"] .result-card:hover,
-:root[data-theme="dark"] .result-card:focus-within {
-  @apply bg-[#16213A] border-[#6b7280] shadow-[0_2px_6px_rgb(0_0_0_/_20%)];
-}
-
-:root[data-theme="dark"] .bg-gray-100 {
-  @apply bg-[#374151];
-}
-
-:root[data-theme="dark"] .text-gray-900,
-:root[data-theme="dark"] .hover\:text-gray-900:hover,
-:root[data-theme="dark"] .file\:text-gray-900::file-selector-button {
-  @apply text-[#f9fafb];
-}
-
-:root[data-theme="dark"] .text-gray-700,
-:root[data-theme="dark"] .label {
-  @apply text-[#d1d5db];
-}
-
-:root[data-theme="dark"] .text-gray-600,
-:root[data-theme="dark"] .text-gray-500 {
-  @apply text-[#9ca3af];
-}
-
-:root[data-theme="dark"] .text-gray-400,
-:root[data-theme="dark"] .hover\:text-gray-700:hover {
-  @apply text-[#9ca3af];
-}
-
-:root[data-theme="dark"] .border-gray-200,
-:root[data-theme="dark"] .border-gray-300,
-:root[data-theme="dark"] .field,
-:root[data-theme="dark"] .btn-secondary {
-  @apply border-[#4b5563];
-}
-
-:root[data-theme="dark"] .file\:bg-white::file-selector-button {
-  @apply bg-[#1f2937];
-}
-
-:root[data-theme="dark"] .file\:border-gray-300::file-selector-button {
-  @apply border-[#4b5563];
-}
-
-:root[data-theme="dark"] .hover\:file\:bg-gray-50:hover::file-selector-button {
-  @apply bg-[#111827];
-}
-
-:root[data-theme="dark"] .hover\:border-gray-400:hover {
-  @apply border-[#6b7280];
-}
-
-:root[data-theme="dark"] .text-blue-700 {
-  @apply text-[#93c5fd];
-}
-
-:root[data-theme="dark"] .bg-amber-50 {
-  @apply bg-[#422006];
-}
-
-:root[data-theme="dark"] .border-amber-200,
-:root[data-theme="dark"] .border-amber-300 {
-  @apply border-[#92400e];
-}
-
-:root[data-theme="dark"] .text-amber-950,
-:root[data-theme="dark"] .text-amber-900 {
-  @apply text-[#fde68a];
-}
-
-:root[data-theme="dark"] .text-amber-700 {
-  @apply text-[#fcd34d];
-}
-
-:root[data-theme="dark"] .text-green-700 {
-  @apply text-[#86efac];
-}
-
-:root[data-theme="dark"] .text-red-600 {
-  @apply text-[#fca5a5];
+  @apply text-cream;
 }

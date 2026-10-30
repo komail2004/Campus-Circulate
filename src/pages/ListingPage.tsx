@@ -87,7 +87,7 @@ export default function ListingPage() {
         ← Back to listings
       </Link>
       <div className="mt-4 grid gap-6 md:grid-cols-2">
-        <ListingPhoto src={listing.photoUrl} alt={listing.title} className="aspect-square w-full rounded border border-gray-200 bg-white object-contain" />
+        <ListingPhoto src={listing.photoUrl} alt={listing.title} className="aspect-square w-full rounded border border-gray-200 bg-surface object-contain" />
         <div>
           <h1 className="text-2xl font-bold">{listing.title}</h1>
           <p className="listing-price mt-1 text-xl font-semibold">{formatPrice(listing.priceCents)}</p>

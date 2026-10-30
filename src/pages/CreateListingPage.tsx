@@ -105,7 +105,7 @@ export default function CreateListingPage() {
             onChange={(event) => {
               void choosePhoto(event.target.files?.[0]);
             }}
-            className="block w-full text-sm text-gray-600 file:mr-3 file:rounded file:border file:border-gray-300 file:bg-white file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-gray-900 hover:file:bg-gray-50"
+            className="block w-full text-sm text-gray-600 file:mr-3 file:rounded file:border file:border-gray-300 file:bg-surface file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-gray-900 hover:file:bg-gray-50"
           />
           {photoUrl && <img src={photoUrl} alt="Preview" className="mt-2 h-48 w-full rounded border border-gray-200 object-cover" />}
         </div>

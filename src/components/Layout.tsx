@@ -46,7 +46,7 @@ export default function Layout() {
 
   return (
     <div className="min-h-dvh">
-      <header className="site-header border-b border-gray-200 bg-white">
+      <header className="site-header border-b border-gray-200 bg-surface">
         <div className="mx-auto flex max-w-5xl flex-wrap items-center gap-x-6 gap-y-3 px-4 py-3">
           <Link to="/" className="site-title text-lg font-bold">
             CampusCirculate
@@ -118,7 +118,7 @@ export default function Layout() {
         <span>Sample accounts · simulated payments · data saved on this browser</span>
         <label className="ml-auto flex items-center gap-2">
           <span>Act as:</span>
-          <select aria-label="Switch sample student" className="rounded border border-amber-300 bg-white px-2 py-1" value={currentUser?.id === "u1" || currentUser?.id === "u2" ? currentUser.id : ""} onChange={e => { if(e.target.value) { demoSwitchUser(e.target.value); navigate("/"); } }}>
+          <select aria-label="Switch sample student" className="rounded border border-amber-300 bg-surface px-2 py-1" value={currentUser?.id === "u1" || currentUser?.id === "u2" ? currentUser.id : ""} onChange={e => { if(e.target.value) { demoSwitchUser(e.target.value); navigate("/"); } }}>
             <option value="">Select a student</option>
             <option value="u1">William Baldwin (buyer)</option>
             <option value="u2">Bob Smith (seller)</option>
