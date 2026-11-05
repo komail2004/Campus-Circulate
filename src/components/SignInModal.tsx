@@ -85,7 +85,7 @@ export default function SignInModal({ onClose }: { onClose: () => void }) {
         <button type="button" onClick={onClose} aria-label="Close" className="absolute top-3 right-3 px-2 text-xl text-gray-500 hover:text-gray-900">
           ×
         </button>
-        <h2 id="sign-in-title" className="text-xl font-bold">
+        <h2 id="sign-in-title" className="text-xl font-bold text-black">
           {isSignUp ? "Create an account" : "Sign in"}
         </h2>
         <p className="mt-1 text-sm text-gray-600">
@@ -99,7 +99,7 @@ export default function SignInModal({ onClose }: { onClose: () => void }) {
           <p className="text-sm font-semibold text-amber-950">Try the full class demo</p>
           <p className="mt-1 text-xs text-amber-900">No password or email needed. Both students share the sample listings, messages and simulated transactions in this browser.</p>
           <div className="mt-3 grid gap-2 sm:grid-cols-2">
-            <button type="button" className="btn btn-primary text-sm" onClick={() => { demoSwitchUser("u1"); onClose(); }}>
+            <button type="button" className="btn btn-cardinal text-sm" onClick={() => { demoSwitchUser("u1"); onClose(); }}>
               Demo buyer — William
             </button>
             <button type="button" className="btn btn-secondary text-sm" onClick={() => { demoSwitchUser("u2"); onClose(); }}>
@@ -169,7 +169,7 @@ export default function SignInModal({ onClose }: { onClose: () => void }) {
               </p>
             )}
             {error && <p className="text-sm text-red-600">{error}</p>}
-            <button type="submit" disabled={!email.trim()} className="btn btn-primary w-full">
+            <button type="submit" disabled={!email.trim()} className="btn btn-cardinal w-full">
               Send verification code
             </button>
           </form>
@@ -199,7 +199,7 @@ export default function SignInModal({ onClose }: { onClose: () => void }) {
               className="field font-mono tracking-widest"
             />
             {error && <p className="text-sm text-red-600">{error}</p>}
-            <button type="submit" className="btn btn-primary w-full">
+            <button type="submit" className="btn btn-cardinal w-full">
               {isSignUp ? "Verify and create account" : "Verify and sign in"}
             </button>
           </form>

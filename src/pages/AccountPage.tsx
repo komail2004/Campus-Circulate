@@ -43,7 +43,7 @@ export default function AccountPage() {
             {count("active")} for sale · {count("reserved")} reserved · {count("sold")} sold
           </p>
         </div>
-        <Link to="/sell" className="btn btn-primary">
+        <Link to="/sell" className="btn btn-primary btn-cardinal">
           Sell something
         </Link>
       </div>
