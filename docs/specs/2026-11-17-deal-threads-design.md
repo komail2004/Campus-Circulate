@@ -2,9 +2,10 @@
 
 Status: approved 2026-11-17 · Owner: William Baldwin · Backend: roommate (after this ships)
 
-CampusCirculate stays **frontend-only** (localStorage) for this work. The data layer is shaped so a
-backend can replace one file (`StoreProvider.tsx`) without page changes. Every rule below must be
-enforced by the backend too; the demo enforces it in the browser.
+The class demo is over; this builds the real product. It stays **frontend-only** (localStorage, "local
+mode") until the backend lands. The data layer is shaped so a backend can replace one file
+(`StoreProvider.tsx`) without page changes. Every rule below must be enforced by the backend too; local
+mode enforces it in the browser.
 
 ## 1. Goals
 
@@ -12,7 +13,8 @@ enforced by the backend too; the demo enforces it in the browser.
 2. Fix the 17 frontend problems found in the 2026-11-17 analysis (section 9).
 3. New features: offers, meetup planner, seller profiles + ratings, saved items, filters/sort, course codes.
 4. A clean backend seam plus a written contract (`docs/backend-handoff.md`).
-5. App is demo-ready after every phase.
+5. Class-demo scaffolding removed from the product; testing tools live behind `localMode` (section 2a).
+6. `main` works after every phase merges.
 
 **Queued, not in scope:** Move-out mode (free pile + bundles). Real auth, payments, image storage,
 disputes — backend work, listed in the contract.
@@ -28,7 +30,7 @@ src/data/rules/              pure rules — no React, no storage, no Date.now, n
 src/data/selectors.ts        read-only derived data (search, unread, names, permissions for UI)
 src/data/storage.ts          localStorage (shared data) + sessionStorage (who's signed in, per tab)
 src/data/StoreProvider.tsx   the seam: each method = run one rule, save, publish
-src/data/seed/               demo users, listings, places, categories, meetup spots
+src/data/seed/               places, categories, meetup spots + sample users/listings (local mode)
 src/lib/                     ids.ts (crypto) · format.ts · time.ts · courseCode.ts · distance.ts
 src/components/ui/Modal.tsx  the only pop-up implementation
 ```
@@ -47,7 +49,23 @@ sets `saveFailed` and the layout shows a banner.
 
 **Tabs.** Shared data lives in localStorage; the signed-in user lives in sessionStorage (per tab).
 A `storage` event listener reloads data saved by another tab. Two windows = buyer and seller side by
-side. Last write wins if two tabs save in the same instant (acceptable for a demo; noted in guide).
+side. Last write wins if two tabs save in the same instant (acceptable in local mode; noted in README).
+
+## 2a. Local mode (replaces the class-demo scaffolding)
+
+`src/config.ts` exports `localMode = true` — the one switch the backend turns off.
+
+- **Removed from the product:** the "Class demo" bar, the "Try the full class demo" box in sign-in,
+  the "Demo payment — no charge" badge, the always-visible "Reset demo data" link, and the fake card
+  form. The app must never collect card numbers in its own inputs; the backend will use a hosted
+  payment form (e.g. Stripe), so the pay step is a "Confirm payment" dialog that calls `payDeal` —
+  the single place a payment call plugs in.
+- **Dev tools panel** (rendered only when `localMode`): sign in as a sample account, reset local
+  data. In local mode the sign-in dialog also shows the verification code on screen (there's no email
+  service yet) and the pay dialog says payments are simulated.
+- **Seed data** (sample users and listings) loads only in local mode.
+- `DEMO_GUIDE.md` is replaced by a real `README.md` (setup, scripts, architecture, local mode,
+  deploy notes carried over from the guide).
 
 ## 3. Data model
 
@@ -133,7 +151,8 @@ Course codes: input like `math120`, `MATH 120`, `Math-120B` → stored `MATH 120
   spots, time windows). The UI's checks are convenience only.
 - Text is rendered as React text only — no `dangerouslySetInnerHTML` anywhere.
 - IDs from `crypto.randomUUID()`; codes from `crypto.getRandomValues`.
-- The demo persona switcher stays demo-only (already refuses non-sample accounts).
+- No raw card fields anywhere. The sample-account switcher exists only in local mode and refuses
+  non-sample accounts.
 - Save key is versioned (`campus-circulate:v2:<seed-hash>`); old `campus-circulate-demo-*` keys are
   deleted on load to free space. Unknown/old shapes start fresh instead of crashing.
 - Server-only on a backend (listed in the contract): handoff code storage + `confirmHandoff`,
@@ -141,9 +160,9 @@ Course codes: input like `math120`, `MATH 120`, `Math-120B` → stored `MATH 120
 
 ## 7. Screens
 
-- **Layout:** header (logo, search, desktop nav, theme toggle); category row with edge fade; full-width
-  demo bar (per-tab "Act as"); storage-full banner; phone bottom tab bar (Browse · Sell · Deals with
-  unread count · Account); footer reset. No sign-in gate on browsing.
+- **Layout:** header (logo, search, desktop nav, theme toggle); category row with edge fade;
+  storage-full banner; phone bottom tab bar (Browse · Sell · Deals with unread count · Account);
+  dev tools panel in local mode only. No sign-in gate on browsing.
 - **Browse:** compact hero on phones (no photo); filters Campus · Nearest to · Sort (Nearest, Newest,
   Price low–high) · Free only · Max price — all in the URL; cards with heart + Buy/Reserve that opens
   the pay dialog.
@@ -189,7 +208,7 @@ closed "Cancelled by Bob" / "Sold to another student" / "Listing removed". Dates
 13. Card Buy button just links to the listing → opens the pay dialog (keeps PR #3's buttons).
 14. Deal page lacks photo/link, timestamps, unread → added.
 15. Card titles in the display font wrap 2–3 lines → body font for card titles.
-16. Demo bar boxed to content width → full width.
+16. Demo bar boxed to content width → removed entirely (section 2a).
 17. Code inputs accept letters; one error at a time; no length limits; same tab title everywhere;
     no edit/delete → digits only, per-field errors, `maxLength`, per-page titles, edit/remove.
 
@@ -199,8 +218,8 @@ Stacked branches, one PR per phase into `main` (William pushes; the team reviews
 
 | Phase | Branch | Contents |
 |---|---|---|
-| 0 | `phase-0-foundation` | Vitest; new types; all rules + selectors + tests; storage; StoreProvider (ref, per-tab session, storage events); seed; existing pages ported to the new model (same UI); `docs/backend-handoff.md`; DEMO_GUIDE update |
-| 1 | `phase-1-fixes` | fixes 2–7, 11, 12, 15, 16, 17 (digits, titles) |
+| 0 | `phase-0-foundation` | Vitest; new types; all rules + selectors + tests; storage; StoreProvider (ref, per-tab session, storage events); seed; `config.ts`; existing pages ported to the new model (same UI); `docs/backend-handoff.md`; README replaces DEMO_GUIDE |
+| 1 | `phase-1-fixes` | local mode (section 2a: demo scaffolding out, dev tools panel, no card form); fixes 2–7, 11, 12, 15, 16, 17 (digits, titles) |
 | 2 | `phase-2-deal-threads` | message seller, offers, pay at agreed price, cancel, event lines, deals list, unread, fixes 1, 13, 14 |
 | 3 | `phase-3-meetups` | meetup planner |
 | 4 | `phase-4-trust` | ratings, seller card, profile page |
@@ -210,7 +229,7 @@ Stacked branches, one PR per phase into `main` (William pushes; the team reviews
 
 Tell the team before Phase 0 merges: it rewrites `src/data/*`, `src/types.ts`, and touches every page.
 Later phases mostly touch pages/components; Phase 1 and 6 touch `Layout.tsx` and `index.css`.
-`DEMO_GUIDE.md` and `docs/backend-handoff.md` are updated in every phase that changes behavior.
+`README.md` and `docs/backend-handoff.md` are updated in every phase that changes behavior.
 
 ## 11. Backlog
 
