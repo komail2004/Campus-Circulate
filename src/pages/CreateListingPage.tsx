@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { useNavigate } from "react-router";
 import { categories } from "../data/categories.ts";
-import { campusForEmail, campuses, placesOnCampus } from "../data/places.ts";
+import { campusForEmail, campuses, placesOnCampus } from "../data/campus.ts";
+import { friendlyError, MAX_PHOTO_CHARS } from "../data/rules/index.ts";
 import type { Category } from "../types.ts";
 import { useMe, useStore } from "../data/storeContext.ts";
 
@@ -35,19 +36,19 @@ export default function CreateListingPage() {
         image.onerror = () => reject(new Error("Image could not be read."));
         image.src = url;
       });
-      const scale = Math.min(1, 800 / Math.max(image.width, image.height));
+      const scale = Math.min(1, 600 / Math.max(image.width, image.height));
       const canvas = document.createElement("canvas");
       canvas.width = Math.max(1, Math.round(image.width * scale));
       canvas.height = Math.max(1, Math.round(image.height * scale));
       canvas.getContext("2d")?.drawImage(image, 0, 0, canvas.width, canvas.height);
-      const data = canvas.toDataURL("image/jpeg", 0.55);
-      if (data.length > 350000) throw new Error("Photo is too large for demo storage. Choose a smaller one.");
+      const data = canvas.toDataURL("image/jpeg", 0.5);
+      if (data.length > MAX_PHOTO_CHARS) throw new Error("This photo is too large. Choose a smaller one.");
       setPhotoUrl(data);
       setError("");
     } catch (e) { setError(e instanceof Error ? e.message : "Could not load photo."); }
     finally { URL.revokeObjectURL(url); }
   }
-  function submit() {
+  async function submit() {
     const dollars = Number(price);
     if (title.trim().length < 3) {
       setError("Give your item a title.");
@@ -58,7 +59,7 @@ export default function CreateListingPage() {
       return;
     }
     try {
-      const listing = createListing({
+      const listing = await createListing({
         title: title.trim(),
         priceCents: Math.round(dollars * 100),
         location: location ?? "",
@@ -68,7 +69,7 @@ export default function CreateListingPage() {
       });
       navigate(`/listings/${listing.id}`);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Something went wrong.");
+      setError(friendlyError(err));
     }
   }
 
@@ -90,7 +91,7 @@ export default function CreateListingPage() {
       <form
         onSubmit={(event) => {
           event.preventDefault();
-          submit();
+          void submit();
         }}
         className="card mt-4 space-y-4 p-5"
       >

@@ -1,6 +1,6 @@
 import { Link } from "react-router";
 import ListingCard from "../components/ListingCard.tsx";
-import { campusForEmail } from "../data/places.ts";
+import { campusForEmail } from "../data/campus.ts";
 import { useMe, useStore } from "../data/storeContext.ts";
 import { useLayout } from "../components/layoutContext.ts";
 
@@ -10,7 +10,7 @@ export default function AccountPage() {
   const { theme, toggleTheme } = useLayout();
   const me = useMe();
   const campus = campusForEmail(me.email);
-  const myListings = listings.filter((l) => l.sellerId === me.id);
+  const myListings = listings.filter((l) => l.sellerId === me.id && l.status !== "removed");
   const count = (status: string) => myListings.filter((l) => l.status === status).length;
 
   return (

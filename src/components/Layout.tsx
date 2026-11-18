@@ -11,7 +11,7 @@ function linkClass({ isActive }: { isActive: boolean }) {
 }
 
 export default function Layout() {
-  const { currentUser, logOut, resetDemo, demoSwitchUser } = useStore();
+  const { currentUser, ready, signOut: endSession, resetLocalData, signInAsSample } = useStore();
   const [signInOpen, setSignInOpen] = useState(false);
   const [theme, setTheme] = useState<"light" | "dark">(() =>
     window.localStorage.getItem("campus-circulate-theme") === "dark" ? "dark" : "light",
@@ -32,15 +32,15 @@ export default function Layout() {
     window.localStorage.setItem("campus-circulate-theme", theme);
   }, [theme]);
 
-  function signOut() {
-    logOut();
+  async function signOut() {
+    await endSession();
     navigate("/");
   }
 
-  // clears accounts, listings, and deals made while rehearsing
-  function reset() {
-    if (!window.confirm("Reset the demo? Accounts, listings, and deals made during the demo will be removed.")) return;
-    resetDemo();
+  // clears accounts, listings, and deals made while testing
+  async function reset() {
+    if (!window.confirm("Reset local data? Accounts, listings, and deals made in this browser will be removed.")) return;
+    await resetLocalData();
     navigate("/");
   }
 
@@ -118,7 +118,7 @@ export default function Layout() {
         <span>Sample accounts · simulated payments · data saved on this browser</span>
         <label className="ml-auto flex items-center gap-2">
           <span>Act as:</span>
-          <select aria-label="Switch sample student" className="rounded border border-amber-300 bg-surface px-2 py-1" value={currentUser?.id === "u1" || currentUser?.id === "u2" ? currentUser.id : ""} onChange={e => { if(e.target.value) { demoSwitchUser(e.target.value); navigate("/"); } }}>
+          <select aria-label="Switch sample student" className="rounded border border-amber-300 bg-surface px-2 py-1" value={currentUser?.id === "u1" || currentUser?.id === "u2" ? currentUser.id : ""} onChange={async (e) => { if (e.target.value) { await signInAsSample(e.target.value); navigate("/"); } }}>
             <option value="">Select a student</option>
             <option value="u1">William Baldwin (buyer)</option>
             <option value="u2">Bob Smith (seller)</option>
@@ -127,7 +127,7 @@ export default function Layout() {
       </div>
       {/* key: signing in or out starts each page fresh (e.g. distance from your own dorm) */}
       <main key={currentUser?.id ?? "guest"} className="mx-auto max-w-5xl px-4 py-6">
-        <Outlet context={context} />
+        {ready ? <Outlet context={context} /> : <p className="text-gray-600">Loading…</p>}
       </main>
 
       <footer className="mx-auto max-w-5xl px-4 pt-4 pb-8 text-xs text-gray-400">

@@ -1,15 +1,15 @@
 import { useEffect, useState } from "react";
-import { isEduEmail } from "../data/actions.ts";
-import { campusForEmail, campuses, placesOnCampus } from "../data/places.ts";
+import { campusForEmail, campuses, placesOnCampus } from "../data/campus.ts";
+import { friendlyError, isEduEmail } from "../data/rules/index.ts";
 import { useStore } from "../data/storeContext.ts";
-import { makeCode } from "../lib/ids.ts";
+import { newCode } from "../lib/ids.ts";
 
 type Mode = "signIn" | "signUp";
 
 // Pop-up for signing in or creating an account.
 // Two steps either way: fill in your details -> type the code we "emailed" you.
 export default function SignInModal({ onClose }: { onClose: () => void }) {
-  const { users, logIn, signUp, demoSwitchUser } = useStore();
+  const { users, signIn, signUp, signInAsSample } = useStore();
   const [mode, setMode] = useState<Mode>("signIn");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -58,17 +58,21 @@ export default function SignInModal({ onClose }: { onClose: () => void }) {
       return;
     }
     setError("");
-    setSentCode(makeCode(6));
+    setSentCode(newCode(6));
   }
 
-  function verify() {
+  async function verify() {
     if (code !== sentCode) {
       setError("That code doesn't match.");
       return;
     }
-    if (mode === "signUp") signUp(name, email, chosenDorm);
-    else logIn(email);
-    onClose();
+    try {
+      if (mode === "signUp") await signUp({ name, email, dorm: chosenDorm });
+      else await signIn(email);
+      onClose();
+    } catch (err) {
+      setError(friendlyError(err));
+    }
   }
 
   const isSignUp = mode === "signUp";
@@ -99,10 +103,10 @@ export default function SignInModal({ onClose }: { onClose: () => void }) {
           <p className="text-sm font-semibold text-amber-950">Try the full class demo</p>
           <p className="mt-1 text-xs text-amber-900">No password or email needed. Both students share the sample listings, messages and simulated transactions in this browser.</p>
           <div className="mt-3 grid gap-2 sm:grid-cols-2">
-            <button type="button" className="btn btn-cardinal text-sm" onClick={() => { demoSwitchUser("u1"); onClose(); }}>
+            <button type="button" className="btn btn-cardinal text-sm" onClick={async () => { await signInAsSample("u1"); onClose(); }}>
               Demo buyer — William
             </button>
-            <button type="button" className="btn btn-secondary text-sm" onClick={() => { demoSwitchUser("u2"); onClose(); }}>
+            <button type="button" className="btn btn-secondary text-sm" onClick={async () => { await signInAsSample("u2"); onClose(); }}>
               Demo seller — Bob
             </button>
           </div>
@@ -177,7 +181,7 @@ export default function SignInModal({ onClose }: { onClose: () => void }) {
           <form
             onSubmit={(event) => {
               event.preventDefault();
-              verify();
+              void verify();
             }}
             className="mt-5 space-y-4"
           >

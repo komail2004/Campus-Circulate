@@ -3,9 +3,10 @@ import { Link, useSearchParams } from "react-router";
 import ListingCard from "../components/ListingCard.tsx";
 import { useLayout } from "../components/layoutContext.ts";
 import SignInGate from "../components/SignInGate.tsx";
-import { campusForEmail, campuses, getPlace, places, placesOnCampus } from "../data/places.ts";
+import { campusForEmail, campuses, placeByName, places, placesOnCampus } from "../data/campus.ts";
+import { categories } from "../data/categories.ts";
+import { browseListings } from "../data/selectors.ts";
 import { useStore } from "../data/storeContext.ts";
-import { milesBetween } from "../lib/distance.ts";
 
 // The home page. Anyone can look; clicking anything while signed out opens the sign-in window.
 export default function BrowsePage() {
@@ -13,7 +14,8 @@ export default function BrowsePage() {
   const { openSignIn } = useLayout();
   const [params] = useSearchParams();
   const query = params.get("q") ?? "";
-  const category = params.get("category");
+  // only real categories count, so a hand-edited URL can't break the page
+  const category = categories.find((c) => c === params.get("category")) ?? null;
 
   // filters: which campus, and which hall to measure distance from
   const myCampus = currentUser ? campusForEmail(currentUser.email) : undefined;
@@ -22,15 +24,8 @@ export default function BrowsePage() {
   const hallOptions = campusId === "all" ? places : placesOnCampus(campusId);
   const fromHall = hallOptions.some((p) => p.name === from) ? from : hallOptions[0].name;
 
-  const search = query.trim().toLowerCase();
-  const origin = getPlace(fromHall);
-  const results = listings
-    .filter((listing) => listing.status !== "sold")
-    .filter((listing) => campusId === "all" || getPlace(listing.location).campusId === campusId)
-    .filter((listing) => !category || listing.category === category)
-    .filter((listing) => !search || listing.title.toLowerCase().includes(search) || listing.description.toLowerCase().includes(search))
-    .map((listing) => ({ listing, miles: milesBetween(origin, getPlace(listing.location)) }))
-    .sort((a, b) => a.miles - b.miles);
+  const origin = placeByName(fromHall) ?? places[0];
+  const results = browseListings(listings, { query, category, campusId, origin, sort: "nearest", freeOnly: false, maxPriceCents: null });
 
   let heading = "Listings near you";
   if (query) heading = `Results for "${query}"`;

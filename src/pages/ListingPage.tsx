@@ -2,20 +2,21 @@ import { useState } from "react";
 import { Link, useNavigate, useParams } from "react-router";
 import ListingPhoto from "../components/ListingPhoto.tsx";
 import { useLayout } from "../components/layoutContext.ts";
-import { getCampus, getPlace } from "../data/places.ts";
+import { getCampus, placeByName } from "../data/campus.ts";
+import { friendlyError } from "../data/rules/index.ts";
 import { useStore } from "../data/storeContext.ts";
 import { formatDistance, milesBetween } from "../lib/distance.ts";
 import { formatPrice } from "../lib/format.ts";
 
 export default function ListingPage() {
-  const { listingId } = useParams();
-  const { listings, users, deals, currentUser, buyListing } = useStore();
+  const { listingId = "" } = useParams();
+  const { listings, users, deals, currentUser, buyNow } = useStore();
   const { openSignIn } = useLayout();
   const navigate = useNavigate();
   const [error, setError] = useState("");
-  const [payOpen, setPayOpen] = useState(false); // the demo card pop-up
+  const [payOpen, setPayOpen] = useState(false); // the card pop-up
 
-  const listing = listings.find((l) => l.id === listingId);
+  const listing = listings.find((l) => l.id === listingId && l.status !== "removed");
   if (!listing) {
     return (
       <p>
@@ -28,9 +29,10 @@ export default function ListingPage() {
   }
 
   const seller = users.find((u) => u.id === listing.sellerId);
-  const myDeal = currentUser
-    ? deals.find((d) => d.listingId === listing.id && (d.buyerId === currentUser.id || d.sellerId === currentUser.id))
-    : undefined;
+  // the signed-in buyer's current deal on this item (sellers manage theirs from Deals)
+  const myDeal = currentUser ? deals.find((d) => d.listingId === listing.id && d.buyerId === currentUser.id && d.status !== "closed") : undefined;
+  const pickup = placeByName(listing.location);
+  const myHall = currentUser?.dorm ? placeByName(currentUser.dorm) : undefined;
 
   const price = formatPrice(listing.priceCents);
   const paid = listing.priceCents > 0;
@@ -43,16 +45,16 @@ export default function ListingPage() {
     }
     // paid items go through the card pop-up first; free items reserve right away
     if (paid) setPayOpen(true);
-    else completePurchase();
+    else void completePurchase();
   }
 
-  function completePurchase() {
+  async function completePurchase() {
     try {
-      const deal = buyListing(listingId ?? "");
+      const deal = await buyNow(listingId);
       navigate(`/deals/${deal.id}`);
     } catch (err) {
       setPayOpen(false);
-      setError(err instanceof Error ? err.message : "Something went wrong.");
+      setError(friendlyError(err));
     }
   }
 
@@ -90,10 +92,11 @@ export default function ListingPage() {
         <ListingPhoto src={listing.photoUrl} alt={listing.title} className="aspect-square w-full rounded border border-gray-200 bg-surface object-contain" />
         <div>
           <h1 className="text-2xl font-bold">{listing.title}</h1>
-          <p className="listing-price mt-1 text-xl font-semibold">{formatPrice(listing.priceCents)}</p>
+          <p className="listing-price mt-1 text-xl font-semibold">{price}</p>
           <p className="mt-2 text-sm text-gray-600">
-            {listing.location}, {getCampus(getPlace(listing.location).campusId)?.name}
-            {currentUser?.dorm && ` · ${formatDistance(milesBetween(getPlace(currentUser.dorm), getPlace(listing.location)))} from your dorm`}
+            {listing.location}
+            {pickup && `, ${getCampus(pickup.campusId)?.name}`}
+            {myHall && pickup && ` · ${formatDistance(milesBetween(myHall, pickup))} from your dorm`}
           </p>
           <p className="text-sm text-gray-600">
             {listing.category} · Seller: {seller?.name} (verified student)
@@ -106,7 +109,7 @@ export default function ListingPage() {
         </div>
       </div>
 
-      {/* Demo card pop-up: nothing is charged; any card details work. */}
+      {/* Card pop-up: nothing is charged; any card details work. Replaced in Phase 1. */}
       {payOpen && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4"
@@ -120,7 +123,7 @@ export default function ListingPage() {
             aria-labelledby="pay-title"
             onSubmit={(event) => {
               event.preventDefault();
-              completePurchase();
+              void completePurchase();
             }}
             className="card relative w-full max-w-sm space-y-4 p-6 shadow-lg"
           >

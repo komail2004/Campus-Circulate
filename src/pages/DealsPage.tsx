@@ -1,11 +1,21 @@
 import { Link } from "react-router";
+import { priceFor } from "../data/rules/index.ts";
+import { dealsForUser, dealStatusLabel, nameOf } from "../data/selectors.ts";
 import { useMe, useStore } from "../data/storeContext.ts";
-import { dealStatus, formatPrice } from "../lib/format.ts";
+import { formatPrice } from "../lib/format.ts";
+import type { DealStatus } from "../types.ts";
+
+const statusColor: Record<DealStatus, string> = {
+  open: "text-gray-600",
+  held: "text-amber-700",
+  completed: "text-green-700",
+  closed: "text-gray-500",
+};
 
 export default function DealsPage() {
-  const { deals, listings, users } = useStore();
+  const store = useStore();
   const me = useMe();
-  const myDeals = deals.filter((d) => d.buyerId === me.id || d.sellerId === me.id);
+  const myDeals = dealsForUser(store, me.id);
 
   return (
     <div>
@@ -14,21 +24,19 @@ export default function DealsPage() {
 
       <div className="mt-4 space-y-2">
         {myDeals.map((deal) => {
-          const listing = listings.find((l) => l.id === deal.listingId);
+          const listing = store.listings.find((l) => l.id === deal.listingId);
           const iAmBuyer = deal.buyerId === me.id;
-          const other = users.find((u) => u.id === (iAmBuyer ? deal.sellerId : deal.buyerId));
+          const other = nameOf(store, iAmBuyer ? deal.sellerId : deal.buyerId);
+          const amount = deal.paidCents ?? (listing ? priceFor(deal, listing) : 0);
           return (
             <Link key={deal.id} to={`/deals/${deal.id}`} className="card result-card flex items-center justify-between gap-4 p-4">
               <div>
                 <p className="font-semibold">{listing?.title}</p>
                 <p className="text-sm text-gray-600">
-                  {iAmBuyer ? `Buying from ${other?.name}` : `Selling to ${other?.name}`} ·{" "}
-                  <span className="listing-price">{formatPrice(deal.amountCents)}</span>
+                  {iAmBuyer ? `Buying from ${other}` : `Selling to ${other}`} · <span className="listing-price">{formatPrice(amount)}</span>
                 </p>
               </div>
-              <span className={`text-sm font-medium ${deal.status === "held" ? "text-amber-700" : "text-green-700"}`}>
-                {dealStatus(deal)}
-              </span>
+              <span className={`text-sm font-medium ${statusColor[deal.status]}`}>{dealStatusLabel(store, deal)}</span>
             </Link>
           );
         })}
