@@ -1,7 +1,7 @@
 // Shared test data. Bob sells a desk chair from Craig Hall; Will and Ann are buyers on the same
 // campus; Sam's school isn't on CampusCirculate. Rules get a fixed clock and predictable ids.
 
-import type { RuleContext } from "../data/rules/index.ts";
+import { payDeal, startDeal, type RuleContext } from "../data/rules/index.ts";
 import type { Data, Deal, Listing, User } from "../types.ts";
 
 export const NOW = "2026-11-17T15:00:00.000Z";
@@ -42,3 +42,15 @@ export const listingIn = (data: Data, id = "chair"): Listing => find(data.listin
 export const userIn = (data: Data, id: string): User => find(data.users, (u) => u.id === id, `user ${id}`);
 export const eventsIn = (data: Data, dealId: string): string[] =>
   data.messages.filter((m) => m.dealId === dealId && m.kind === "event").map((m) => m.text);
+
+// `buyerId` opens a deal on the chair.
+export function opened(data = someData(), buyerId = "will") {
+  const { data: next, deal } = startDeal(data, ctxAt(), buyerId, "chair");
+  return { data: next, dealId: deal.id };
+}
+
+// ...and pays for it.
+export function paid(data = someData(), buyerId = "will") {
+  const { data: next, dealId } = opened(data, buyerId);
+  return { data: payDeal(next, ctxAt(), buyerId, dealId).data, dealId };
+}
