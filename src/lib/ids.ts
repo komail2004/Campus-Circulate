@@ -1,13 +1,17 @@
-// Makes unique IDs like "lst_m2k9x3ab12" and random number codes like "4829".
+// Unique ids and secret number codes from the browser's cryptographic random source.
+// Never Math.random: a handoff code is all that stands between a buyer's money and the seller.
 
-export function makeId(prefix: string) {
-  return `${prefix}_${Date.now().toString(36)}${Math.random().toString(36).slice(2, 7)}`;
+export function newId(prefix: string): string {
+  return `${prefix}_${crypto.randomUUID()}`;
 }
 
-export function makeCode(digits: number) {
+// `digits` random digits, e.g. "048213". Bytes of 250 and up are skipped so every digit is equally likely.
+export function newCode(digits: number): string {
+  const byte = new Uint8Array(1);
   let code = "";
-  for (let i = 0; i < digits; i++) {
-    code += Math.floor(Math.random() * 10);
+  while (code.length < digits) {
+    crypto.getRandomValues(byte);
+    if (byte[0] < 250) code += byte[0] % 10;
   }
   return code;
 }
