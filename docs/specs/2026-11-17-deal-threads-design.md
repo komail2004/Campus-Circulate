@@ -30,7 +30,10 @@ src/data/rules/              pure rules — no React, no storage, no Date.now, n
 src/data/selectors.ts        read-only derived data (search, unread, names, permissions for UI)
 src/data/storage.ts          localStorage (shared data) + sessionStorage (who's signed in, per tab)
 src/data/StoreProvider.tsx   the seam: each method = run one rule, save, publish
-src/data/seed/               places, categories, meetup spots + sample users/listings (local mode)
+src/data/campus.ts           campuses, halls, meetup spots
+src/data/categories.ts       listing categories
+src/data/sample.ts           sample users + listings (local mode only)
+src/config.ts                localMode switch
 src/lib/                     ids.ts (crypto) · format.ts · time.ts · courseCode.ts · distance.ts
 src/components/ui/Modal.tsx  the only pop-up implementation
 ```
@@ -45,7 +48,9 @@ disable buttons. One source of truth — the UI can't drift from the rules.
 
 **Store.** `StoreProvider` keeps the latest `Data` in a ref so back-to-back actions (send, then
 mark read) build on each other instead of overwriting. After each rule it saves; if saving fails it
-sets `saveFailed` and the layout shows a banner.
+sets `saveFailed` and the layout shows a banner. Store methods return Promises (they resolve at once
+in local mode) and the store exposes `ready`, so pages already `await` and wait for data the way
+they will against a backend — the swap really is one file.
 
 **Tabs.** Shared data lives in localStorage; the signed-in user lives in sessionStorage (per tab).
 A `storage` event listener reloads data saved by another tab. Two windows = buyer and seller side by
