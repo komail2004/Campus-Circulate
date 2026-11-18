@@ -6,3 +6,4 @@ export * from "./users.ts";
 export * from "./listings.ts";
 export * from "./deals.ts";
 export * from "./offers.ts";
+export * from "./meetups.ts";
