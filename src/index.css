@@ -125,34 +125,3 @@
     background: linear-gradient(var(--color-cardinal) 0 50%, var(--color-gold) 50% 100%);
   }
 }
-
-/* Older pages still use these names; they move to the classes above as each page is rebuilt. */
-@layer components {
-  .card {
-    @apply rounded-lg border border-line bg-surface;
-  }
-  .btn-cardinal {
-    @apply bg-accent text-white hover:brightness-110;
-  }
-  .btn-secondary {
-    @apply border border-line-strong bg-surface text-ink hover:bg-surface-2;
-  }
-  .listing-price {
-    @apply font-display text-xl leading-none font-bold tabular-nums;
-  }
-}
-:root[data-theme="dark"] {
-  --color-gray-50: #1a2438;
-  --color-gray-100: #1a2438;
-  --color-gray-200: #222c40;
-  --color-gray-300: #2a3957;
-  --color-gray-400: #94a0b2;
-  --color-gray-500: #94a0b2;
-  --color-gray-600: #94a0b2;
-  --color-gray-700: #c3cad6;
-  --color-gray-900: #e9edf4;
-  --color-blue-700: #a9bdf0;
-  --color-amber-700: #fcd34d;
-  --color-green-700: #86efac;
-  --color-red-600: #f97066;
-}

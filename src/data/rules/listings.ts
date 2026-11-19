@@ -15,27 +15,43 @@ export const MAX_PRICE_CENTS = 1_000_000; // $10,000
 export const MAX_PHOTO_CHARS = 200_000;
 
 // Our own sample photos, or a JPEG the Sell form drew on a canvas. Anything else (other sites,
-// javascript: URLs, SVGs, which can carry scripts) is refused.
+// javascript: URLs, SVGs, which can carry scripts) is refused. When photos move to file storage,
+// allow that storage's URL prefix here and nothing broader.
 const PHOTO_URL = /^(\/listings\/[a-z0-9-]+\.(webp|png|jpg)|data:image\/jpeg;base64,[A-Za-z0-9+/]+=*)$/;
+
+export type ListingField = "title" | "priceCents" | "category" | "description" | "photoUrl" | "courseCode";
+
+// What's wrong with a Sell / Edit form, field by field (empty = fine). The form shows these next to each
+// field; the rules refuse on the first one, so both always agree.
+export function listingProblems(input: ListingInput): Partial<Record<ListingField, string>> {
+  const problems: Partial<Record<ListingField, string>> = {};
+  const title = input.title.trim();
+  if (title.length < 3 || title.length > TITLE_MAX) problems.title = `Give your item a title (3–${TITLE_MAX} characters).`;
+  if (!(Number.isSafeInteger(input.priceCents) && input.priceCents >= 0 && input.priceCents <= MAX_PRICE_CENTS)) problems.priceCents = "Enter a price from $0 to $10,000.";
+  if (!categories.includes(input.category)) problems.category = "Pick a category.";
+  if (input.description.trim().length > DESCRIPTION_MAX) problems.description = "Keep the description to 1,000 characters or less.";
+  if (input.photoUrl && !(input.photoUrl.length <= MAX_PHOTO_CHARS && PHOTO_URL.test(input.photoUrl))) problems.photoUrl = "That photo can't be used. Choose a different image.";
+  if (input.category === "Textbooks" && input.courseCode?.trim() && !normalizeCourseCode(input.courseCode)) problems.courseCode = "Course codes look like MATH 120.";
+  return problems;
+}
 
 // Checks the Sell / Edit form and returns it cleaned up (trimmed, course code normalized).
 function cleanInput(data: Data, sellerId: string, input: ListingInput): ListingInput {
   const campus = campusForEmail(getUser(data, sellerId).email);
   check(campus, "Only students at a CampusCirculate campus can sell.");
   check(placeByName(input.location)?.campusId === campus.id, `Pick a pickup spot at ${campus.name}.`);
+  allow(Object.values(listingProblems(input))[0] ?? null);
 
-  const title = input.title.trim();
-  const description = input.description.trim();
-  check(title.length >= 3 && title.length <= TITLE_MAX, `Give your item a title (3–${TITLE_MAX} characters).`);
-  check(description.length <= DESCRIPTION_MAX, "Keep the description to 1,000 characters or less.");
-  check(Number.isSafeInteger(input.priceCents) && input.priceCents >= 0 && input.priceCents <= MAX_PRICE_CENTS, "Enter a price from $0 to $10,000.");
-  check(categories.includes(input.category), "Pick a category.");
-  check(!input.photoUrl || (input.photoUrl.length <= MAX_PHOTO_CHARS && PHOTO_URL.test(input.photoUrl)), "That photo can't be used. Choose a different image.");
-
-  const courseCode = input.category === "Textbooks" && input.courseCode?.trim() ? normalizeCourseCode(input.courseCode) : undefined;
-  check(courseCode !== null, "Course codes look like MATH 120.");
-
-  return { title, description, priceCents: input.priceCents, location: input.location, category: input.category, photoUrl: input.photoUrl || undefined, courseCode };
+  const courseCode = input.category === "Textbooks" && input.courseCode?.trim() ? (normalizeCourseCode(input.courseCode) ?? undefined) : undefined;
+  return {
+    title: input.title.trim(),
+    description: input.description.trim(),
+    priceCents: input.priceCents,
+    location: input.location,
+    category: input.category,
+    photoUrl: input.photoUrl || undefined,
+    courseCode,
+  };
 }
 
 export function createListing(data: Data, ctx: RuleContext, sellerId: string, input: ListingInput) {

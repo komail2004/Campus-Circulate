@@ -13,6 +13,7 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 import { localMode } from "../config.ts";
 import { newCode, newId } from "../lib/ids.ts";
 import type { Data } from "../types.ts";
+import { compressPhoto } from "./photo.ts";
 import * as rules from "./rules/index.ts";
 import { emptyData, SAMPLE_VERSION, sampleData, sampleUsers } from "./sample.ts";
 import { findUserByEmail } from "./selectors.ts";
@@ -104,6 +105,10 @@ export default function StoreProvider({ children }: { children: ReactNode }) {
       setSession(null);
     },
 
+    async uploadPhoto(file) {
+      me(); // only signed-in students upload
+      return compressPhoto(file);
+    },
     createListing: async (input) => run((d, ctx, actor) => rules.createListing(d, ctx, actor, input)).listing,
     updateListing: async (listingId, input) => {
       run((d, ctx, actor) => rules.updateListing(d, ctx, actor, listingId, input));

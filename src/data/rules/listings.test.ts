@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { aListing, ctxAt, listingIn, NOW, someData } from "../../test/fixtures.ts";
 import type { ListingInput } from "../../types.ts";
-import { createListing, removeListing, updateListing } from "./listings.ts";
+import { createListing, listingProblems, removeListing, updateListing } from "./listings.ts";
 
 const form: ListingInput = { title: "Lamp", priceCents: 500, location: "Berry Hall", category: "Furniture", description: "Works" };
 
@@ -42,6 +42,17 @@ describe("createListing", () => {
 
   it("only lets students on a supported campus sell", () => {
     expect(() => createListing(someData(), ctxAt(), "sam", form)).toThrow(/CampusCirculate campus/);
+  });
+});
+
+describe("listingProblems", () => {
+  it("lists every bad field at once, so the form can mark each one", () => {
+    expect(listingProblems({ ...form, title: "", priceCents: Number.NaN, category: "Textbooks", courseCode: "nope" })).toEqual({
+      title: expect.stringMatching(/title/),
+      priceCents: expect.stringMatching(/price/),
+      courseCode: expect.stringMatching(/MATH 120/),
+    });
+    expect(listingProblems(form)).toEqual({});
   });
 });
 

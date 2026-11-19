@@ -20,6 +20,7 @@ export type Store = Data & {
   signInAsSample: (userId: string) => Promise<void>; // local mode only
   resetLocalData: () => Promise<void>; // local mode only
 
+  uploadPhoto: (file: File) => Promise<string>; // returns the URL to save as the listing's photoUrl
   createListing: (input: ListingInput) => Promise<Listing>;
   updateListing: (listingId: string, input: ListingInput) => Promise<void>;
   removeListing: (listingId: string) => Promise<void>;

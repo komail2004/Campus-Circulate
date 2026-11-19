@@ -1,4 +1,4 @@
-import { CaretLeftIcon, MapPinIcon, SealCheckIcon, ShieldCheckIcon } from "@phosphor-icons/react";
+import { CaretLeftIcon, CaretRightIcon, MapPinIcon, SealCheckIcon, ShieldCheckIcon } from "@phosphor-icons/react";
 import { useState, type ReactNode } from "react";
 import { Link, useNavigate, useParams } from "react-router";
 import ConfirmDialog from "../components/ConfirmDialog.tsx";
@@ -64,9 +64,14 @@ export default function ListingPage() {
       <div className="space-y-2">
         <p className="text-sm text-muted">{editBlock ?? "This is your listing."}</p>
         {!editBlock && (
-          <button type="button" onClick={() => setDialog("remove")} className="btn btn-outline w-full">
-            Remove listing
-          </button>
+          <div className="grid grid-cols-2 gap-2">
+            <Link to={`/listings/${listing.id}/edit`} className="btn btn-brand">
+              Edit listing
+            </Link>
+            <button type="button" onClick={() => setDialog("remove")} className="btn btn-outline">
+              Remove
+            </button>
+          </div>
         )}
       </div>
     );
@@ -138,16 +143,17 @@ export default function ListingPage() {
 
           {listing.description && <p className="max-w-[65ch] border-t border-line pt-5 text-[15px] leading-relaxed text-body">{listing.description}</p>}
 
-          <div className="flex items-center gap-3 border-t border-line pt-5">
+          <Link to={`/students/${listing.sellerId}`} className="group flex items-center gap-3 border-t border-line pt-5">
             <span className="flex size-11 shrink-0 items-center justify-center rounded-lg bg-brand-solid text-[15px] font-semibold text-white">{initials(sellerName)}</span>
-            <div className="min-w-0">
-              <p className="flex items-center gap-1.5 font-semibold">
+            <div className="min-w-0 flex-1">
+              <p className="flex items-center gap-1.5 font-semibold group-hover:underline">
                 {sellerName}
                 <SealCheckIcon size={17} weight="fill" className="text-brand" aria-label="Verified student" />
               </p>
               <p className="text-[13px] text-muted">Verified .edu student</p>
             </div>
-          </div>
+            <CaretRightIcon size={18} className="text-muted" />
+          </Link>
 
           {!isOwner && (
             <div className="flex gap-3 rounded-lg bg-surface-2 p-4">
