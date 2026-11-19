@@ -1,158 +1,158 @@
 @import "tailwindcss";
 
-/* =====================================================================
-   1. TOKENS: change a color here and it changes everywhere
-   ===================================================================== */
-
-/* Brand colors + font. */
-@theme static {
+/* Brand and type. Navy carries the brand, cardinal is the only action color, gold is an accent line. */
+@theme {
+  --font-sans: "Geist Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "Geist Mono Variable", ui-monospace, monospace;
+  --font-display: "Barlow Condensed", "Arial Narrow", sans-serif;
   --color-navy: #234380;
   --color-cardinal: #8a1730;
-  --color-cardinal-dark: #741329; /* hover */
   --color-gold: #ffc72c;
-  --color-cream: #f4edda;
-  --font-display: "Alfa Slab One", serif;
 }
 
-/* Colors that differ between light and dark (light values here). */
+/* Colors that change with the theme. One cool-slate gray family. */
 :root {
-  --page: var(--color-cream);
-  --surface: #ffffff;
-  --heading: var(--color-navy);
-  --header: var(--color-navy);
-  --focus: var(--color-navy);
-  --shadow-hover: 0 2px 6px rgb(17 24 39 / 8%);
+  color-scheme: light;
+  --page: #f5f6f8;
+  --surface: #fcfcfd;
+  --surface-2: #eef1f6;
+  --ink: #0f1a2e;
+  --body: #3a4556;
+  --muted: #5a6372;
+  --line: #e3e6eb;
+  --line-strong: #cfd4dc;
+  --brand: #234380; /* links and brand text */
+  --brand-solid: #234380; /* navy buttons and panels */
+  --accent: #8a1730; /* cardinal buttons */
+  --accent-text: #8a1730; /* cardinal as text */
+  --header: #234380;
+  --header-muted: #c9d5ef;
+  --danger: #b42318;
 }
 
-/* Expose them as utilities: bg-page, bg-surface, text-heading, bg-header, border-focus */
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --page: #0b1220;
+  --surface: #121a2b;
+  --surface-2: #1a2438;
+  --ink: #e9edf4;
+  --body: #c3cad6;
+  --muted: #94a0b2;
+  --line: #222c40;
+  --line-strong: #2a3957;
+  --brand: #a9bdf0;
+  --brand-solid: #2f5096;
+  --accent: #b3264a;
+  --accent-text: #f2a1b3;
+  --header: #15254a;
+  --header-muted: #a9bdf0;
+  --danger: #f97066;
+}
+
 @theme inline {
   --color-page: var(--page);
   --color-surface: var(--surface);
-  --color-heading: var(--heading);
+  --color-surface-2: var(--surface-2);
+  --color-ink: var(--ink);
+  --color-body: var(--body);
+  --color-muted: var(--muted);
+  --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
+  --color-brand: var(--brand);
+  --color-brand-solid: var(--brand-solid);
+  --color-accent: var(--accent);
+  --color-accent-text: var(--accent-text);
   --color-header: var(--header);
-  --color-focus: var(--focus);
+  --color-header-muted: var(--header-muted);
+  --color-danger: var(--danger);
 }
 
-/* =====================================================================
-   2. DARK MODE
-   ===================================================================== */
-:root[data-theme="dark"] {
-  color-scheme: dark;
-
-  --page: #0e1524; 
-  --surface: #16213a;
-  --heading: var(--color-cream);
-  --header: #16213a;
-  --focus: var(--color-gold);
-  --shadow-hover: 0 2px 6px rgb(0 0 0 / 20%);
-
-  --color-gray-50: #111827;
-  --color-gray-100: #374151;
-  --color-gray-200: #4b5563;
-  --color-gray-300: #4b5563;
-  --color-gray-400: #9ca3af;
-  --color-gray-500: #9ca3af;
-  --color-gray-600: #9ca3af;
-  --color-gray-700: #d1d5db;
-  --color-gray-900: #f9fafb;
-
-  --color-blue-700: #93c5fd;
-  --color-amber-50: #422006;
-  --color-amber-200: #92400e;
-  --color-amber-300: #92400e;
-  --color-amber-700: #fcd34d;
-  --color-amber-900: #fde68a;
-  --color-amber-950: #fde68a;
-  --color-green-700: #86efac;
-  --color-red-600: #fca5a5;
-}
-
-/* =====================================================================
-   3. BASE + COMPONENTS
-   ===================================================================== */
 @layer base {
   body {
-    @apply bg-page text-gray-900;
+    @apply bg-page font-sans text-ink antialiased;
   }
-
-  main :is(h1, h2, h3, h4, h5, h6),
-  main .listing-card h3,
-  main .result-card > div > .font-semibold {
-    @apply text-heading;
+  :focus-visible {
+    outline: 2px solid var(--brand);
+    outline-offset: 2px;
   }
-
-  h1, h2, h3, h4, h5, h6,
-  .site-title,
-  .listing-price {
-    @apply font-display tracking-[0.04em];
+  /* an open dialog stops the page behind it from scrolling */
+  html:has(dialog[open]) {
+    overflow: hidden;
   }
 }
 
-/* Reusable building blocks, used as plain class names (className="btn btn-primary"). */
+/* Shared pieces. Shapes: 8px corners on anything you tap or that holds content, 4px on tiny labels. */
 @layer components {
   .btn {
-    @apply inline-block rounded border px-4 py-2 text-sm font-medium disabled:opacity-50;
+    @apply inline-flex h-11 items-center justify-center gap-2 rounded-lg px-4 text-[15px] font-semibold whitespace-nowrap transition active:scale-[0.98] disabled:pointer-events-none disabled:opacity-50;
   }
-  .btn-primary,
-  .btn-cardinal {
-    @apply border-cardinal bg-cardinal text-white hover:bg-cardinal-dark;
+  .btn-primary {
+    @apply bg-accent text-white hover:brightness-110;
   }
-  .btn-secondary {
-    @apply border-gray-300 bg-surface text-gray-900 hover:bg-gray-50;
+  .btn-brand {
+    @apply bg-brand-solid text-white hover:brightness-110;
+  }
+  .btn-outline {
+    @apply border border-line-strong bg-surface text-ink hover:bg-surface-2;
+  }
+  .btn-icon {
+    @apply inline-flex size-11 items-center justify-center rounded-lg transition active:scale-[0.96];
   }
   .field {
-    @apply w-full rounded border border-gray-300 bg-surface px-3 py-2 text-sm text-gray-900 focus:border-focus focus:outline-none;
+    @apply block h-11 w-full rounded-lg border border-line-strong bg-surface px-3 text-[15px] text-ink placeholder:text-muted;
+  }
+  textarea.field {
+    @apply h-auto py-2.5;
   }
   .label {
-    @apply mb-1 block text-sm font-medium text-gray-700;
+    @apply mb-1.5 block text-sm font-medium text-ink;
   }
+  .panel {
+    @apply rounded-lg border border-line bg-surface;
+  }
+  .heading {
+    @apply font-display leading-none font-bold tracking-[0.03em] uppercase;
+  }
+  .price {
+    @apply font-display leading-none font-bold tabular-nums;
+  }
+  .link {
+    @apply font-medium text-brand hover:underline;
+  }
+  /* the varsity stripe under the header: cardinal over gold */
+  .stripe {
+    @apply h-1;
+    background: linear-gradient(var(--color-cardinal) 0 50%, var(--color-gold) 50% 100%);
+  }
+}
+
+/* Older pages still use these names; they move to the classes above as each page is rebuilt. */
+@layer components {
   .card {
-    @apply rounded border border-gray-200 bg-surface;
+    @apply rounded-lg border border-line bg-surface;
   }
-  .listing-card {
-    @apply border-gray-300;
+  .btn-cardinal {
+    @apply bg-accent text-white hover:brightness-110;
+  }
+  .btn-secondary {
+    @apply border border-line-strong bg-surface text-ink hover:bg-surface-2;
   }
   .listing-price {
-    @apply inline-block rounded bg-gold px-1.5 py-0.5 text-navy;
-  }
-  .payment-protected {
-    @apply bg-gold text-navy;
-  }
-  .result-card {
-    @apply transition-[background-color,border-color,box-shadow] duration-150 ease-[ease];
-  }
-  .result-card:hover,
-  .result-card:focus-within {
-    @apply border-gray-300 bg-gray-50;
-    box-shadow: var(--shadow-hover);
+    @apply font-display text-xl leading-none font-bold tabular-nums;
   }
 }
-
-/* =====================================================================
-   4. SMALL ONE-OFFS
-   ===================================================================== */
-.site-header {
-  @apply border-header bg-header text-white;
-
-  /* varsity stripe along the bottom edge: cardinal, cream, gold */
-  background-image: linear-gradient(
-    to bottom,
-    var(--color-cardinal) 0 3px,
-    var(--color-cream) 3px 4px,
-    var(--color-gold) 4px 5px
-  );
-  background-repeat: no-repeat;
-  background-size: 100% 5px;
-  background-position: bottom;
-}
-
-.site-header :is(a, button:not(.btn-secondary)) {
-  @apply text-white;
-}
-:root:not([data-theme="dark"]) .site-header .btn-secondary {
-  @apply border-white bg-white text-navy;
-}
-
-:root[data-theme="dark"] [aria-labelledby="appearance-heading"] button[aria-pressed="true"] {
-  @apply text-cream;
+:root[data-theme="dark"] {
+  --color-gray-50: #1a2438;
+  --color-gray-100: #1a2438;
+  --color-gray-200: #222c40;
+  --color-gray-300: #2a3957;
+  --color-gray-400: #94a0b2;
+  --color-gray-500: #94a0b2;
+  --color-gray-600: #94a0b2;
+  --color-gray-700: #c3cad6;
+  --color-gray-900: #e9edf4;
+  --color-blue-700: #a9bdf0;
+  --color-amber-700: #fcd34d;
+  --color-green-700: #86efac;
+  --color-red-600: #f97066;
 }

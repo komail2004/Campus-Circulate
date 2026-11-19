@@ -19,17 +19,17 @@ function sampleListing(id: string, title: string, priceCents: number, location: 
 }
 
 export const sampleListings: Listing[] = [
-  sampleListing("1", "Mini fridge", 4500, "Berry Hall", "Appliances", "mini-fridge.png", "Mini fridge is basically new, just downsizing and need it gone"),
-  sampleListing("2", "Calculus textbook", 2000, "Rutledge Rivers Hall", "Textbooks", "calculus-textbook.png", "Used only one year, don't need it anymore"),
+  sampleListing("1", "Mini fridge", 4500, "Berry Hall", "Appliances", "mini-fridge.webp", "Mini fridge is basically new, just downsizing and need it gone"),
+  sampleListing("2", "Calculus textbook", 2000, "Rutledge Rivers Hall", "Textbooks", "calculus-textbook.webp", "Used only one year, don't need it anymore"),
   sampleListing("3", "Coffee Table", 1000, "McAlister Hall", "Furniture", "coffee-table.webp", "Banged up but is sturdy still"),
-  sampleListing("4", "Harbinger Speaker", 3000, "Buist Rivers", "Electronics", "speaker.png", "Harbinger Speaker product number 5xfH6s3KKoF, plays music just fine and all outlets work."),
+  sampleListing("4", "Harbinger Speaker", 3000, "Buist Rivers", "Electronics", "speaker.webp", "Harbinger Speaker product number 5xfH6s3KKoF, plays music just fine and all outlets work."),
   sampleListing("5", "Leather sofa", 0, "Buist Rivers", "Furniture", "leather-sofa.webp", "Rough Condition, just need it gone, first come first serve"),
   sampleListing("6", "IKEA Lamp + desk", 500, "Berry Hall", "Furniture", "lamp-desk.webp", "Used only a semester, don't need it anymore, but still looks new"),
-  sampleListing("7", "Graphing calculator", 4000, "Craig Hall", "Electronics", "calculator.png", "TI-84 Plus CE, works perfectly"),
-  sampleListing("8", "Twin XL mattress topper", 1500, "Rutledge Rivers Hall", "Other", "mattress-topper.png", "Quilted pillow-top topper, fits the dorm beds, always used with a water-proof cover so very good condition"),
+  sampleListing("7", "Graphing calculator", 4000, "Craig Hall", "Electronics", "calculator.webp", "TI-84 Plus CE, works perfectly"),
+  sampleListing("8", "Twin XL mattress topper", 1500, "Rutledge Rivers Hall", "Other", "mattress-topper.webp", "Quilted pillow-top topper, fits the dorm beds, always used with a water-proof cover so very good condition"),
   sampleListing("9", "Microwave", 2500, "McAlister Hall", "Appliances", "microwave.webp", "Fits on a dorm shelf, cleaned and ready to go"),
-  sampleListing("10", "Winter coat (men's M)", 0, "Craig Hall", "Clothing", "winter-coat.png", "Warm brown jacket, free to whoever needs it"),
-  sampleListing("11", "Desk chair", 2000, "Liberty Hall", "Furniture", "desk-chair.png", "Rolling chair, adjustable height"),
+  sampleListing("10", "Winter coat (men's M)", 0, "Craig Hall", "Clothing", "winter-coat.webp", "Warm brown jacket, free to whoever needs it"),
+  sampleListing("11", "Desk chair", 2000, "Liberty Hall", "Furniture", "desk-chair.webp", "Rolling chair, adjustable height"),
   sampleListing("12", "Bike lock", 800, "Buist Rivers", "Other", "bike-lock.webp", "Heavy cable lock with two keys"),
 ];
 

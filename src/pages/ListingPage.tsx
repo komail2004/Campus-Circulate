@@ -5,7 +5,7 @@ import { useLayout } from "../components/layoutContext.ts";
 import { getCampus, placeByName } from "../data/campus.ts";
 import { friendlyError } from "../data/rules/index.ts";
 import { useStore } from "../data/storeContext.ts";
-import { formatDistance, milesBetween } from "../lib/distance.ts";
+import { milesBetween, walkLabel } from "../lib/distance.ts";
 import { formatPrice } from "../lib/format.ts";
 
 export default function ListingPage() {
@@ -96,7 +96,7 @@ export default function ListingPage() {
           <p className="mt-2 text-sm text-gray-600">
             {listing.location}
             {pickup && `, ${getCampus(pickup.campusId)?.name}`}
-            {myHall && pickup && ` · ${formatDistance(milesBetween(myHall, pickup))} from your dorm`}
+            {myHall && pickup && ` · ${walkLabel(milesBetween(myHall, pickup), true)}`}
           </p>
           <p className="text-sm text-gray-600">
             {listing.category} · Seller: {seller?.name} (verified student)
