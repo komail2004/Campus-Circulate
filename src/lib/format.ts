@@ -5,6 +5,11 @@ export function formatPrice(cents: number) {
   return Number.isInteger(dollars) ? `$${dollars}` : `$${dollars.toFixed(2)}`;
 }
 
+// "William Baldwin" -> "William": friendlier in sentences like "Waiting for William to pay."
+export function firstName(name: string) {
+  return name.trim().split(/\s+/)[0] ?? name;
+}
+
 // "William Baldwin" -> "WB", "Cher" -> "C".
 export function initials(name: string) {
   const parts = name.trim().split(/\s+/);
