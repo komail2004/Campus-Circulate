@@ -1,6 +1,13 @@
 // Local-mode implementation of the store: each method runs one rule from ./rules against the newest
 // data and saves the result in this browser. THIS is the backend seam: replace each method body with
-// a server call (see docs/backend-handoff.md) and the pages don't change.
+// a server call and the pages don't change.
+//
+// When the backend replaces it, these must live on the server, never trusted from the client:
+// - every rule in ./rules (run them as server functions; clients never write collections directly)
+// - handoffCodes: only the buyer may read their code; the seller's device must never receive it
+// - user stats and event messages (written only by rules), time, ids and codes (the RuleContext)
+// - signed-out reads get names masked (see displayName) and never email or dorm
+// - payDeal / confirmHandoff / cancelDeal run as transactions (two buyers paying at once: one wins)
 
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { localMode } from "../config.ts";
