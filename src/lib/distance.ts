@@ -17,9 +17,9 @@ export function milesBetween(a: Place, b: Place) {
   return 2 * EARTH_RADIUS_MILES * Math.asin(Math.sqrt(h));
 }
 
-// Campus is small, so short distances read better in feet: 0 -> "same hall", 0.02 -> "100 ft", 0.31 -> "0.3 mi".
-export function formatDistance(miles: number) {
-  if (miles < 0.01) return "same hall";
-  if (miles < 0.1) return `${Math.max(50, Math.round((miles * 5280) / 50) * 50)} ft`;
-  return `${miles.toFixed(1)} mi`;
+// Students think in minutes, not miles: a 3 mph walk is 20 minutes per mile.
+// `fromOwnDorm` is true when distance is measured from the viewer's dorm, so "In your hall" is honest.
+export function walkLabel(miles: number, fromOwnDorm: boolean) {
+  if (miles < 0.01) return fromOwnDorm ? "In your hall" : "Same hall";
+  return `${Math.max(1, Math.round(miles * 20))} min walk`;
 }

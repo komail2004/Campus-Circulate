@@ -1,210 +1,185 @@
-import { useEffect, useState } from "react";
-import { isEduEmail } from "../data/actions.ts";
-import { campusForEmail, campuses, placesOnCampus } from "../data/places.ts";
+import { useState } from "react";
+import { localMode } from "../config.ts";
+import { campusForEmail, campuses, placesOnCampus } from "../data/campus.ts";
+import { friendlyError, isEduEmail } from "../data/rules/index.ts";
+import { sampleUsers } from "../data/sample.ts";
 import { useStore } from "../data/storeContext.ts";
-import { makeCode } from "../lib/ids.ts";
+import { newCode } from "../lib/ids.ts";
+import Modal from "./Modal.tsx";
 
 type Mode = "signIn" | "signUp";
 
-// Pop-up for signing in or creating an account.
-// Two steps either way: fill in your details -> type the code we "emailed" you.
+// Sign in or create an account: details first, then the 6-digit code from the school email.
+// In local mode there's no email service, so the code is shown on screen.
 export default function SignInModal({ onClose }: { onClose: () => void }) {
-  const { users, logIn, signUp, demoSwitchUser } = useStore();
+  const { users, signIn, signUp, signInAsSample } = useStore();
   const [mode, setMode] = useState<Mode>("signIn");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [dorm, setDorm] = useState("");
-  const [sentCode, setSentCode] = useState(""); // empty until a code is "sent"
+  const [sentCode, setSentCode] = useState("");
   const [code, setCode] = useState("");
   const [error, setError] = useState("");
 
-  // the dorm list follows the email: a cofc.edu email gets College of Charleston halls
+  const isSignUp = mode === "signUp";
   const campus = campusForEmail(email);
   const dormOptions = campus ? placesOnCampus(campus.id) : [];
   const chosenDorm = dormOptions.some((p) => p.name === dorm) ? dorm : dormOptions[0]?.name;
 
-  // the Escape key closes the window
-  useEffect(() => {
-    function handleKey(event: KeyboardEvent) {
-      if (event.key === "Escape") onClose();
-    }
-    window.addEventListener("keydown", handleKey);
-    return () => window.removeEventListener("keydown", handleKey);
-  }, [onClose]);
-
-  function switchMode(next: Mode) {
-    setMode(next);
+  function switchMode() {
+    setMode(isSignUp ? "signIn" : "signUp");
     setSentCode("");
     setCode("");
     setError("");
   }
 
   function sendCode() {
-    if (mode === "signUp" && !name.trim()) {
-      setError("Enter your name.");
-      return;
-    }
-    if (!isEduEmail(email)) {
-      setError("CampusCirculate is for students only. Use your .edu email.");
-      return;
-    }
     const exists = users.some((u) => u.email === email.trim().toLowerCase());
-    if (mode === "signIn" && !exists) {
-      setError("No student account found for that email. Create an account instead.");
-      return;
+    if (isSignUp && !name.trim()) setError("Enter your name.");
+    else if (!isEduEmail(email)) setError("CampusCirculate is for students only. Use your .edu email.");
+    else if (!isSignUp && !exists) setError("No account uses that email. Create one instead.");
+    else if (isSignUp && exists) setError("There's already an account with that email. Sign in instead.");
+    else {
+      setError("");
+      setSentCode(newCode(6));
     }
-    if (mode === "signUp" && exists) {
-      setError("There's already an account with that email. Sign in instead.");
-      return;
-    }
-    setError("");
-    setSentCode(makeCode(6));
   }
 
-  function verify() {
-    if (code !== sentCode) {
-      setError("That code doesn't match.");
-      return;
+  async function verify() {
+    if (code !== sentCode) return setError("That code doesn't match.");
+    try {
+      if (isSignUp) await signUp({ name, email, dorm: chosenDorm });
+      else await signIn(email);
+      onClose();
+    } catch (err) {
+      setError(friendlyError(err));
     }
-    if (mode === "signUp") signUp(name, email, chosenDorm);
-    else logIn(email);
-    onClose();
   }
-
-  const isSignUp = mode === "signUp";
 
   return (
-    // clicking the dark background (but not the window itself) closes it
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4"
-      onClick={(event) => {
-        if (event.target === event.currentTarget) onClose();
-      }}
-    >
-      <div role="dialog" aria-modal="true" aria-labelledby="sign-in-title" className="card relative w-full max-w-sm p-6 shadow-lg">
-        <button type="button" onClick={onClose} aria-label="Close" className="absolute top-3 right-3 px-2 text-xl text-gray-500 hover:text-gray-900">
-          ×
+    <Modal title={isSignUp ? "Create an account" : "Sign in"} onClose={onClose}>
+      <p className="-mt-2 mb-5 text-sm text-muted">
+        {isSignUp ? "Already have an account? " : "New to CampusCirculate? "}
+        <button type="button" onClick={switchMode} className="link">
+          {isSignUp ? "Sign in" : "Create an account"}
         </button>
-        <h2 id="sign-in-title" className="text-xl font-bold text-black">
-          {isSignUp ? "Create an account" : "Sign in"}
-        </h2>
-        <p className="mt-1 text-sm text-gray-600">
-          {isSignUp ? "Already have an account? " : "New to CampusCirculate? "}
-          <button type="button" onClick={() => switchMode(isSignUp ? "signIn" : "signUp")} className="text-blue-700 hover:underline">
-            {isSignUp ? "Sign in" : "Create an account"}
-          </button>
-        </p>
+      </p>
 
-        <div className="mt-5 rounded-lg border border-amber-200 bg-amber-50 p-3">
-          <p className="text-sm font-semibold text-amber-950">Try the full class demo</p>
-          <p className="mt-1 text-xs text-amber-900">No password or email needed. Both students share the sample listings, messages and simulated transactions in this browser.</p>
-          <div className="mt-3 grid gap-2 sm:grid-cols-2">
-            <button type="button" className="btn btn-cardinal text-sm" onClick={() => { demoSwitchUser("u1"); onClose(); }}>
-              Demo buyer — William
-            </button>
-            <button type="button" className="btn btn-secondary text-sm" onClick={() => { demoSwitchUser("u2"); onClose(); }}>
-              Demo seller — Bob
-            </button>
-          </div>
-        </div>
-
-        {!sentCode ? (
-          <form
-            onSubmit={(event) => {
-              event.preventDefault();
-              sendCode();
-            }}
-            className="mt-5 space-y-4"
-          >
-            {isSignUp && (
-              <div>
-                <label className="label" htmlFor="name">
-                  Name
-                </label>
-                <input
-                  id="name"
-                  autoFocus
-                  value={name}
-                  onChange={(event) => {
-                    setName(event.target.value);
-                    setError(""); // an old error shouldn't stick around once you fix the field
-                  }}
-                  className="field"
-                />
-              </div>
-            )}
+      {!sentCode ? (
+        <form
+          onSubmit={(event) => {
+            event.preventDefault();
+            sendCode();
+          }}
+          className="space-y-4"
+        >
+          {isSignUp && (
             <div>
-              <label className="label" htmlFor="email">
-                School email
+              <label className="label" htmlFor="signin-name">
+                Name
               </label>
-              <input
-                id="email"
-                type="email"
-                autoFocus={!isSignUp}
-                value={email}
-                onChange={(event) => {
-                  setEmail(event.target.value);
-                  setError("");
-                }}
-                placeholder="you@school.edu"
-                className="field"
-              />
+              <input id="signin-name" autoFocus autoComplete="name" maxLength={60} value={name} onChange={(e) => setName(e.target.value)} className="field" />
             </div>
-            {isSignUp && campus && (
-              <div>
-                <label className="label" htmlFor="dorm">
-                  Your dorm at {campus.name}
-                </label>
-                <select id="dorm" value={chosenDorm} onChange={(event) => setDorm(event.target.value)} className="field">
-                  {dormOptions.map((place) => (
-                    <option key={place.name}>{place.name}</option>
-                  ))}
-                </select>
-              </div>
-            )}
-            {isSignUp && !campus && isEduEmail(email) && (
-              <p className="text-sm text-gray-600">
-                Your school isn't on CampusCirculate yet. You can still buy from {campuses.map((c) => c.name).join(", ")} students, but
-                you can't sell.
-              </p>
-            )}
-            {error && <p className="text-sm text-red-600">{error}</p>}
-            <button type="submit" disabled={!email.trim()} className="btn btn-cardinal w-full">
-              Send verification code
-            </button>
-          </form>
-        ) : (
-          <form
-            onSubmit={(event) => {
-              event.preventDefault();
-              verify();
-            }}
-            className="mt-5 space-y-4"
-          >
-            <p className="text-sm">We sent a 6-digit code to {email}.</p>
-            <p className="rounded bg-gray-100 p-3 text-sm">
-              Demo inbox: your code is <strong className="font-mono">{sentCode}</strong>
-            </p>
+          )}
+          <div>
+            <label className="label" htmlFor="signin-email">
+              School email
+            </label>
             <input
+              id="signin-email"
+              type="email"
+              autoFocus={!isSignUp}
+              autoComplete="email"
+              value={email}
+              onChange={(e) => {
+                setEmail(e.target.value);
+                setError("");
+              }}
+              placeholder="you@school.edu"
+              className="field"
+            />
+          </div>
+          {isSignUp && campus && (
+            <div>
+              <label className="label" htmlFor="signin-dorm">
+                Your hall at {campus.name}
+              </label>
+              <select id="signin-dorm" value={chosenDorm} onChange={(e) => setDorm(e.target.value)} className="field">
+                {dormOptions.map((place) => (
+                  <option key={place.name}>{place.name}</option>
+                ))}
+              </select>
+            </div>
+          )}
+          {isSignUp && !campus && isEduEmail(email) && (
+            <p className="text-sm text-muted">
+              Your school isn't on CampusCirculate yet. You can buy from {campuses.map((c) => c.name).join(", ")} students, but you can't sell.
+            </p>
+          )}
+          {error && <p className="text-sm text-danger">{error}</p>}
+          <button type="submit" disabled={!email.trim()} className="btn btn-primary w-full">
+            Send code
+          </button>
+        </form>
+      ) : (
+        <form
+          onSubmit={(event) => {
+            event.preventDefault();
+            void verify();
+          }}
+          className="space-y-4"
+        >
+          <p className="text-sm text-body">We sent a 6-digit code to {email}.</p>
+          {localMode && (
+            <p className="rounded-lg bg-surface-2 p-3 text-sm">
+              Local mode, no email sent. Your code is <span className="font-mono font-medium">{sentCode}</span>
+            </p>
+          )}
+          <div>
+            <label className="label" htmlFor="signin-code">
+              Code
+            </label>
+            <input
+              id="signin-code"
               value={code}
-              onChange={(event) => {
-                setCode(event.target.value);
+              onChange={(e) => {
+                setCode(e.target.value.replace(/\D/g, ""));
                 setError("");
               }}
               inputMode="numeric"
+              autoComplete="one-time-code"
               autoFocus
               maxLength={6}
-              placeholder="Enter code"
-              aria-label="Verification code"
-              className="field font-mono tracking-widest"
+              className="field font-mono tracking-[0.3em]"
             />
-            {error && <p className="text-sm text-red-600">{error}</p>}
-            <button type="submit" className="btn btn-cardinal w-full">
-              {isSignUp ? "Verify and create account" : "Verify and sign in"}
-            </button>
-          </form>
-        )}
-      </div>
-    </div>
+          </div>
+          {error && <p className="text-sm text-danger">{error}</p>}
+          <button type="submit" disabled={code.length !== 6} className="btn btn-primary w-full">
+            {isSignUp ? "Create account" : "Sign in"}
+          </button>
+        </form>
+      )}
+
+      {localMode && (
+        <div className="mt-6 border-t border-line pt-4">
+          <p className="mb-2 text-sm text-muted">Or try it as a sample student</p>
+          <div className="grid grid-cols-2 gap-2">
+            {sampleUsers.map((u) => (
+              <button
+                key={u.id}
+                type="button"
+                className="btn btn-outline"
+                onClick={async () => {
+                  await signInAsSample(u.id);
+                  onClose();
+                }}
+              >
+                {u.name}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+    </Modal>
   );
 }
