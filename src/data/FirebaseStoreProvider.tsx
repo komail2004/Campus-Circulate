@@ -54,8 +54,8 @@ function listingInput(input: ListingInput, email: string): Record<string, unknow
     location: input.location,
     category: input.category,
     description: input.description.trim(),
-    photoUrl: input.photoUrl || deleteField(),
-    courseCode: input.category === "Textbooks" && input.courseCode?.trim() ? input.courseCode.trim().toUpperCase() : deleteField(),
+    ...(input.photoUrl ? { photoUrl: input.photoUrl } : {}),
+    ...(input.category === "Textbooks" && input.courseCode?.trim() ? { courseCode: input.courseCode.trim().toUpperCase() } : {}),
   };
 }
 
@@ -120,16 +120,6 @@ export default function FirebaseStoreProvider({ children }: { children: ReactNod
   const data: Data = { ...empty, users, listings, saves };
   const ready = loaded.auth && loaded.listings && loaded.profiles && loaded.own;
 
-  async function requireOwnerListing(listingId: string): Promise<Listing> {
-    const user = requireVerified(firebaseAuth.currentUser);
-    const snap = await getDoc(doc(firestore, "listings", listingId));
-    if (!snap.exists()) throw new RuleError("This listing no longer exists.");
-    const listing = snap.data() as Listing;
-    if (listing.sellerId !== user.uid) throw new RuleError("Only the seller can change this listing.");
-    if (listing.status !== "active") throw new RuleError("Only active listings can be edited.");
-    return listing;
-  }
-
   const store: Store = {
     ...data,
     ready,
@@ -143,6 +133,17 @@ export default function FirebaseStoreProvider({ children }: { children: ReactNod
       if (!credential.user.emailVerified) {
         await signOut(firebaseAuth);
         throw new RuleError("Please verify your email using the link Firebase sent before signing in.");
+      }
+      await credential.user.getIdToken(true);
+      const profile = await getDoc(doc(firestore, "users", credential.user.uid));
+      if (!profile.exists()) {
+        await signOut(firebaseAuth);
+        throw new RuleError("Your profile could not be found. Please contact the CampusCirculate team.");
+      }
+      const publicRef = doc(firestore, "publicProfiles", credential.user.uid);
+      if (!(await getDoc(publicRef)).exists()) {
+        const person = profile.data() as User;
+        await setDoc(publicRef, { id: person.id, name: person.name, joinedAt: person.joinedAt, stats: person.stats });
       }
     },
     async signUp(input, password) {
@@ -161,9 +162,6 @@ export default function FirebaseStoreProvider({ children }: { children: ReactNod
       };
       const batch = writeBatch(firestore);
       batch.set(doc(firestore, "users", user.id), user);
-      batch.set(doc(firestore, "publicProfiles", user.id), {
-        id: user.id, name, joinedAt: user.joinedAt, stats: { ...defaultStats },
-      });
       await batch.commit();
       await sendEmailVerification(credential.user);
       await signOut(firebaseAuth);
@@ -180,17 +178,12 @@ export default function FirebaseStoreProvider({ children }: { children: ReactNod
       const user = requireVerified(firebaseAuth.currentUser);
       const ref = doc(collection(firestore, "listings"));
       const cleaned = listingInput(input, user.email!);
-      const listing = {
-        ...cleaned, id: ref.id, sellerId: user.uid, status: "active", createdAt: now(),
+      const listing: Listing = {
+        ...(cleaned as unknown as ListingInput),
+        id: ref.id, sellerId: user.uid, status: "active", createdAt: now(),
       };
-      // The Firestore rules cap thumbnail sizes and restrict the owner/status.
-      // FieldValue.delete() is only valid in updates, so omit optional fields here.
-      const create = Object.fromEntries(Object.entries(listing).filter(([, value]) => value !== undefined && value !== deleteField));
-      // Explicitly remove delete sentinel values from newly created documents.
-      if (!input.photoUrl) delete create.photoUrl;
-      if (!input.courseCode || input.category !== "Textbooks") delete create.courseCode;
-      await setDoc(ref, create);
-      return listing as unknown as Listing;
+      await setDoc(ref, listing);
+      return listing;
     },
     async updateListing(listingId, input) {
       const user = requireVerified(firebaseAuth.currentUser);
@@ -201,7 +194,12 @@ export default function FirebaseStoreProvider({ children }: { children: ReactNod
         if (!snapshot.exists()) throw new RuleError("Listing not found.");
         const listing = snapshot.data() as Listing;
         if (listing.sellerId !== user.uid || listing.status !== "active") throw new RuleError("Only the owner can edit active listings.");
-        tx.update(ref, cleaned);
+        tx.update(ref, {
+          ...cleaned,
+          photoUrl: input.photoUrl || deleteField(),
+          courseCode: input.category === "Textbooks" && input.courseCode?.trim()
+            ? input.courseCode.trim().toUpperCase() : deleteField(),
+        });
       });
     },
     async removeListing(listingId) {
