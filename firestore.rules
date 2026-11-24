@@ -11,7 +11,7 @@ service cloud.firestore {
     function student() { return eduEmail() && request.auth.token.email_verified == true; }
     function cofcStudent() {
       return student()
-        && request.auth.token.email.matches('^[^@ ]+@([A-Za-z0-9-]+\\.)*cofc\\.edu');
+        && request.auth.token.email.matches('^[^@ ]+@([A-Za-z0-9-]+\\.)*cofc\\.edu$');
     }
     function safePhoto(d) {
       return !('photoUrl' in d)
