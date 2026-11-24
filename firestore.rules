@@ -86,7 +86,26 @@ service cloud.firestore {
     }
     // A user's saved items are private. These records have no marketplace authority.
     match /saves/{saveId} {
-      allow read, delete: if signedIn() && resource.data.userId == request.auth.uid;
+      allow get: if signedIn() && saveId.matches('^' + request.auth.uid + '_.*
+      allow create: if student()
+        && request.resource.data.keys().hasOnly(['userId', 'listingId', 'savedAt'])
+        && request.resource.data.userId == request.auth.uid
+        && request.resource.data.listingId is string
+        && request.resource.data.savedAt is string
+        && saveId == request.auth.uid + '_' + request.resource.data.listingId;
+      allow update: if false;
+    }
+    // Marketplace money, inventory transitions, secret handoff codes, offers and
+    // private messages MUST be moved to a trusted transactional backend first.
+    // Never expose these direct document writes to the client.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
+);
+      allow list: if signedIn() && resource.data.userId == request.auth.uid;
+      allow delete: if signedIn() && resource.data.userId == request.auth.uid;
       allow create: if student()
         && request.resource.data.keys().hasOnly(['userId', 'listingId', 'savedAt'])
         && request.resource.data.userId == request.auth.uid
