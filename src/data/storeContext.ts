@@ -14,8 +14,8 @@ export type Store = Data & {
   currentUser: User | null;
   saveFailed: boolean; // the browser refused to save (usually storage full)
 
-  signIn: (email: string) => Promise<void>;
-  signUp: (input: SignUpInput) => Promise<void>;
+  signIn: (email: string, password?: string) => Promise<void>;
+  signUp: (input: SignUpInput, password?: string) => Promise<void>;
   signOut: () => Promise<void>;
   signInAsSample: (userId: string) => Promise<void>; // local mode only
   resetLocalData: () => Promise<void>; // local mode only
