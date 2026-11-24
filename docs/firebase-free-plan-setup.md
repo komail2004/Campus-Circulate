@@ -1,34 +1,84 @@
-# Firebase free-plan integration (staged)
+# CampusCirculate: Firebase Spark / Vercel staged integration
 
-Project: `campus-circulate-ed5c1`. Frontend remains on Vercel.
+Firebase project: `campus-circulate-ed5c1` (Cloud Firestore default database, `nam5`).
+The branch `firebase-free-plan-foundation` uses the Firebase JavaScript SDK. The default
+`main` remains the existing fully local classroom demo until we verify the real backend.
 
-## Safety boundary
-The existing `main` release is a local-mode classroom demonstration. Do not turn off `localMode` until a Firebase store is implemented, rules are deployed, Auth email verification and cross-device tests pass, and Vercel has the required public web configuration.
+## What this branch implements
 
-## Firebase Console setup
-1. **Authentication**: enable Email/Password, verify that email verification is sent and required before posting, and add your Vercel production domain under Authentication → Settings → Authorized domains.
-2. **Firestore Database**: default database is present in `nam5`. In the **Rules** tab, replace the default rules with this branch's `firestore.rules` and publish. Use Firebase Emulator Suite to test before publishing whenever possible.
-3. **Storage**: not enabled, because the project is staying on Spark (free plan). Never enable an unrestricted public upload endpoint.
-4. **Photographs**: for a *small classroom demo only*, a compressed JPEG data URL of **at most 65 KB** may be stored in a listing document. This is not a scalable file store. The React local demo already compresses images; the Firestore adapter must reduce further or reject oversized images. For production use a properly authenticated upload endpoint with a dedicated image host; no unsigned Cloudinary upload preset.
-5. **Firestore indexes**: avoid requiring indexes initially; subscribe to public listing collection and apply existing `browseListings` search/filter logic client-side for the modest classroom dataset. Review scale/privacy later.
+- Firebase Email/Password account creation and real email verification
+- Private Firestore student records (`users/{uid}`), public names/stats (`publicProfiles/{uid}`)
+- Live Firestore listeners for listings, public profiles, and the signed-in student's bookmarks
+- Seller-only creation, editing and removal of active listings; existing client search, filters,
+  campus proximity and pricing continue to operate on shared listings
+- Authenticated bookmarks, reloaded across devices
+- Small, compressed JPEG thumbnails embedded in individual Firestore listing documents (64,000
+  characters maximum). This is a short-term, capped workaround without a Storage billing plan.
+  Large/full-resolution photos require a separate authenticated image hosting service.
+- Original local mode is kept when Firebase public web settings are not configured
 
-## Security model
-- User account private fields are in `users/{uid}`, owner-read only.
-- Public seller name and aggregate stats are separate in `publicProfiles/{uid}`. Don't put email or dorm there.
-- Signed-in and **email-verified** .edu users can create/update their own active listings.
-- Anonymous visitors can browse listings and public profile names.
-- All direct client reads and writes to private deals, messages and handoff codes are **denied**, pending trusted server actions.
-- Payments remain unimplemented. Do not claim funds are captured or held.
+**Not yet implemented in Firebase mode:** real checkout, escrow/payments, offer negotiations,
+private messaging and handoff-code transactions. These deliberately fail closed, rather
+than expose sensitive transactions through unrestricted Firestore client writes. The old
+local classroom simulation still works in local mode.
 
-## Manual test checklist
-Use two browser profiles/devices:
-- Sign up with a school email; require email verification before listing.
-- Ensure non-.edu addresses cannot post. Check the auth token's `email_verified` claim, not just a client regex.
-- User A creates a listing; user B can search/filter and see it without refreshing.
-- User B cannot modify user A's listing.
-- User A can edit or remove their own *active* listing.
-- Firestore denies arbitrary writes to `deals`, `messages`, and `handoffCodes`.
-- Upload a small JPEG and confirm it persists, or decline image upload until a secure file host is configured.
+## Required one-time Firebase Console work
 
-## Deployment
-This branch provides configuration/rules *scaffolding*, not a completed Firebase adapter. Rule files in GitHub **do not automatically deploy** just by merging a PR or redeploying Vercel. Deploy rules separately from the Firebase CLI or paste them into Firestore Rules console. Never merge code that expects these rules before publishing the verified policy.
+1. In **Authentication → Sign-in method**, ensure Email/Password is enabled.
+2. Under **Authentication → Settings → Authorized domains**, add the domain serving your
+   Vercel site. Check any preview domain you intend to use.
+3. In **Firestore Database → Rules**, copy the complete `firestore.rules` from this branch.
+   Review it with the team and click **Publish**. Rules committed to GitHub are **not** deployed
+   to Firebase by Vercel. Never use a blanket `allow read, write: if true` policy.
+4. Confirm that the default Firestore database exists. Do **not** manually insert demo
+   users with arbitrary IDs; authentication uses real Firebase UIDs.
+5. Cloud Storage is **not required** for this trial, and staying on the Spark plan avoids
+   the Blaze billing requirement shown in the Firebase console.
+
+## Vercel public build variables
+
+Set these in Vercel → CampusCirculate → Settings → Environment Variables for the desired
+Preview environment first, using the **exact public SDK web config** from Firebase Project
+Settings → General → Your apps → SDK setup and configuration → Config:
+
+```
+VITE_FIREBASE_API_KEY=<your real public web API key>
+VITE_FIREBASE_APP_ID=<your real public web app ID>
+VITE_FIREBASE_AUTH_DOMAIN=campus-circulate-ed5c1.firebaseapp.com
+VITE_FIREBASE_PROJECT_ID=campus-circulate-ed5c1
+```
+
+These web settings are not service-account secrets. **Never** upload a service account JSON
+file or admin private key to this repository. Vite embeds `VITE_*` environment variables
+at **build time**, so redeploy after changing them. For testing use a branch Preview and do not
+promote to Production until the security rules and functional tests pass.
+
+## End-to-end acceptance tests (two browsers/devices)
+
+1. Confirm the default site can browse but cannot create a listing when signed out.
+2. Register a new `.edu` email and password (at least 8 characters), receive a **real**
+   verification email, follow the link and sign in. Unverified users cannot post.
+3. Repeat with a non-`.edu` email: account creation should be rejected by the app and
+   Firestore policy. Note that email ownership alone does not establish current enrollment.
+4. Register a CofC student, select an allowed hall, post a listing with or without a
+   small JPEG thumbnail. Verify it appears on a **second device**.
+5. Search for the new title and textbook course code, filter by category, price, free
+   and campus, and sort by distance/newest/price.
+6. Edit and remove your own active listing. Confirm another account cannot modify it.
+7. Bookmark an item, sign in on another device and confirm the bookmark persists.
+8. Confirm Firestore prevents direct client reads of other people's private user records
+   and any writes to `deals`, `messages` and `handoffCodes`.
+9. Confirm no page claims that a card was charged or a payment is held in Firebase mode.
+10. Verify all GitHub CI tests and the production build before merging the draft PR.
+
+## The next backend phase
+
+To bring real buyer/seller deals and handoff codes across devices without exposing
+private codes or allowing double reservations, build a trusted transactional API on
+Vercel (with securely provisioned credentials), or use Firebase Functions if the billing
+plan permits. Keep paid checkout disabled until a proper payment provider is integrated;
+Firestore alone is not an escrow system. For full-resolution photo uploads, configure a
+dedicated, authenticated image-hosting service with server-verified Firebase identity.
+
+Do not merge this feature branch solely because its TypeScript build passes: Firebase
+rules must be tested against the actual service and a real verified account first.
