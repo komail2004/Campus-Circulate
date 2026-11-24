@@ -6,6 +6,7 @@ import Modal from "../components/Modal.tsx";
 import { useLayout } from "../components/layoutContext.ts";
 import { campusForEmail, campuses, placeByName, places, placesOnCampus } from "../data/campus.ts";
 import { categories } from "../data/categories.ts";
+import { localMode } from "../config.ts";
 import { browseListings, type SortOrder } from "../data/selectors.ts";
 import { useStore } from "../data/storeContext.ts";
 import { browseSearch, readBrowseParams, type BrowseParams } from "../lib/browseParams.ts";
@@ -41,7 +42,7 @@ export default function BrowsePage() {
     <div>
       {!currentUser && (
         <section className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-lg bg-surface-2 p-4">
-          <p className="max-w-[52ch] text-[15px] text-body">Buy and sell with verified students on your campus. Your payment is held until the item is in your hands.</p>
+          <p className="max-w-[52ch] text-[15px] text-body">{localMode ? "Buy and sell with fellow students on your campus. Payments are simulated in this demo." : "Find and post items near campus with verified student accounts. Checkout is not enabled yet."}</p>
           <button type="button" onClick={openSignIn} className="btn btn-primary">
             Sign in
           </button>
