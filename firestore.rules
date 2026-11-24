@@ -56,7 +56,7 @@ service cloud.firestore {
     }
     match /publicProfiles/{userId} {
       allow read: if true;
-      allow create: if isOwner(userId)
+      allow create: if student() && isOwner(userId)
         && request.resource.data.keys().hasOnly(['id','name','joinedAt','stats'])
         && request.resource.data.id == userId
         && request.resource.data.name is string
