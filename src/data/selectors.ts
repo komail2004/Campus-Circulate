@@ -101,7 +101,7 @@ export function dealStatusLabel(data: Data, deal: Deal): string {
     case "open":
       return "Chatting";
     case "held":
-      return deal.paidCents ? "Payment held" : "Reserved";
+      return deal.paidCents ? "Purchase reserved" : "Reserved";
     case "completed":
       return "Completed";
     case "closed":
