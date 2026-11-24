@@ -151,9 +151,9 @@ export default function ListingPage() {
             <div className="min-w-0 flex-1">
               <p className="flex items-center gap-1.5 font-semibold group-hover:underline">
                 {sellerName}
-                <SealCheckIcon size={17} weight="fill" className="text-brand" aria-label="Verified student" />
+                <SealCheckIcon size={17} weight="fill" className="text-brand" aria-label="Demo student" />
               </p>
-              <p className="text-[13px] text-muted">Verified .edu student</p>
+              <p className="text-[13px] text-muted">Class demo student profile</p>
             </div>
             <CaretRightIcon size={18} className="text-muted" />
           </Link>
@@ -162,8 +162,8 @@ export default function ListingPage() {
             <div className="flex gap-3 rounded-lg bg-surface-2 p-4">
               <ShieldCheckIcon size={22} className="shrink-0 text-brand" />
               <div>
-                <p className="text-sm font-semibold">Payment protection</p>
-                <p className="mt-0.5 text-[13px] leading-relaxed text-body">Your payment is held until you have the item and share your handoff code.</p>
+                <p className="text-sm font-semibold">Simulated payment protection</p>
+                <p className="mt-0.5 text-[13px] leading-relaxed text-body">In this demo only, payment is marked as held until handoff. No real money moves.</p>
               </div>
             </div>
           )}
