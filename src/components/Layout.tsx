@@ -4,7 +4,6 @@ import { Link, NavLink, Outlet, useNavigate, useSearchParams } from "react-route
 import { unreadDealCount } from "../data/selectors.ts";
 import { useStore } from "../data/storeContext.ts";
 import { initials } from "../lib/format.ts";
-import DevTools from "./DevTools.tsx";
 import type { LayoutContext } from "./layoutContext.ts";
 import SignInModal from "./SignInModal.tsx";
 
@@ -126,7 +125,6 @@ export default function Layout() {
         {ready ? <Outlet context={context} /> : <p className="text-muted">Loading…</p>}
       </main>
 
-      <DevTools />
 
       <nav aria-label="Main" className="fixed inset-x-0 bottom-0 z-10 grid grid-cols-4 border-t border-line bg-surface pb-[env(safe-area-inset-bottom)] md:hidden">
         <TabLink to="/" icon={<HouseIcon size={22} />} label="Browse" />

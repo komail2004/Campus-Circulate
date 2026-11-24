@@ -7,6 +7,7 @@ import OfferDialog from "../components/OfferDialog.tsx";
 import PayDialog from "../components/PayDialog.tsx";
 import SaveButton from "../components/SaveButton.tsx";
 import { useLayout } from "../components/layoutContext.ts";
+import { localMode } from "../config.ts";
 import { placeByName } from "../data/campus.ts";
 import { whyNotEdit } from "../data/rules/index.ts";
 import { displayName } from "../data/selectors.ts";
@@ -75,6 +76,8 @@ export default function ListingPage() {
         )}
       </div>
     );
+  } else if (!localMode) {
+    actions = <p className="rounded-lg bg-surface-2 p-4 text-sm text-body">Listings are live. Checkout and private messaging are temporarily unavailable until secure transaction processing is configured. Save this item to return to it later.</p>;
   } else if (myDeal) {
     actions = (
       <Link to={`/deals/${myDeal.id}`} className="btn btn-brand w-full">
@@ -155,7 +158,7 @@ export default function ListingPage() {
             <CaretRightIcon size={18} className="text-muted" />
           </Link>
 
-          {!isOwner && (
+          {!isOwner && localMode && (
             <div className="flex gap-3 rounded-lg bg-surface-2 p-4">
               <ShieldCheckIcon size={22} className="shrink-0 text-brand" />
               <div>

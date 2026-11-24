@@ -1,6 +1,7 @@
 import { Link } from "react-router";
 import ListingPhoto from "../components/ListingPhoto.tsx";
 import { dealsForUser, dealStatusLabel, messagesForDeal, nameOf, unreadCount } from "../data/selectors.ts";
+import { localMode } from "../config.ts";
 import { useMe, useStore } from "../data/storeContext.ts";
 import { firstName } from "../lib/format.ts";
 import { messageWhen } from "../lib/time.ts";
@@ -18,7 +19,7 @@ export default function DealsPage() {
       {myDeals.length === 0 ? (
         <div className="panel mt-6 px-6 py-12 text-center">
           <p className="font-medium">No deals yet</p>
-          <p className="mt-1 text-sm text-muted">Message a seller or buy something to start one.</p>
+          <p className="mt-1 text-sm text-muted">{localMode ? "Message a seller or buy something to start one." : "Checkout and private messaging will be enabled after secure transaction processing is configured."}</p>
           <Link to="/" className="btn btn-outline mt-5">
             Browse listings
           </Link>
