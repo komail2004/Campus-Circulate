@@ -2,7 +2,7 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     function signedIn() { return request.auth != null; }
-    function isOwner(uid) { return signedIn() && request.auth.uid == uid; }
+    function owner(uid) { return signedIn() && request.auth.uid == uid; }
     function eduEmail() {
       return signedIn()
         && request.auth.token.email is string
@@ -11,56 +11,54 @@ service cloud.firestore {
     function student() { return eduEmail() && request.auth.token.email_verified == true; }
     function cofcStudent() {
       return student()
-        && request.auth.token.email.matches('^[^@ ]+@([A-Za-z0-9-]+\\.)*cofc\\.edu
-    function validPhoto(d) {
+        && request.auth.token.email.matches('^[^@ ]+@([A-Za-z0-9-]+\\.)*cofc\\.edu');
+    }
+    function safePhoto(d) {
       return !('photoUrl' in d)
         || (d.photoUrl is string && d.photoUrl.size() <= 65000
           && (d.photoUrl.matches('^data:image/jpeg;base64,[A-Za-z0-9+/=]+$')
             || d.photoUrl.matches('^/listings/[A-Za-z0-9-]+\\.webp$')));
     }
-    function validListing(d) {
-      return d.keys().hasOnly(['id','sellerId','title','description','category',
-          'priceCents','location','photoUrl','courseCode','status','createdAt'])
+    function safeListing(d) {
+      return d.keys().hasOnly(['id','sellerId','title','description',
+        'category','priceCents','location','photoUrl','courseCode','status','createdAt'])
         && d.id is string && d.sellerId is string
         && d.title is string && d.title.size() >= 3 && d.title.size() <= 80
         && d.description is string && d.description.size() <= 1000
-        && d.location is string
-        && d.location in ['Berry Hall','Craig Hall','Rutledge Rivers Hall',
-          'Buist Rivers','Liberty Hall','McAlister Hall','McConnel Hall']
+        && d.location in ['Berry Hall', 'Craig Hall', 'Rutledge Rivers Hall',
+          'Buist Rivers', 'Liberty Hall', 'McAlister Hall', 'McConnel Hall']
         && d.category in ['Furniture','Electronics','Textbooks','Appliances','Clothing','Other']
         && d.priceCents is int && d.priceCents >= 0 && d.priceCents <= 1000000
-        && d.createdAt is string && validPhoto(d);
+        && d.createdAt is string && safePhoto(d);
     }
     match /users/{uid} {
-      allow get: if isOwner(uid);
+      allow get: if owner(uid);
       allow list: if false;
-      allow create: if isOwner(uid) && eduEmail()
+      allow create: if owner(uid) && eduEmail()
         && request.resource.data.keys().hasOnly(['id','name','email','dorm','joinedAt','stats'])
         && request.resource.data.id == uid
         && request.resource.data.email == request.auth.token.email
         && request.resource.data.name is string
         && request.resource.data.name.size() > 0 && request.resource.data.name.size() <= 60
         && request.resource.data.stats == {'completedHandoffs':0,'thumbsUp':0,'thumbsDown':0};
-      allow update: if isOwner(uid)
+      allow update: if owner(uid)
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['name','dorm'])
         && request.resource.data.name is string
-        && request.resource.data.name.size() > 0
-        && request.resource.data.name.size() <= 60;
+        && request.resource.data.name.size() > 0 && request.resource.data.name.size() <= 60;
       allow delete: if false;
     }
     match /publicProfiles/{uid} {
       allow get, list: if true;
-      allow create: if student() && isOwner(uid)
+      allow create: if student() && owner(uid)
         && request.resource.data.keys().hasOnly(['id','name','joinedAt','stats'])
         && request.resource.data.id == uid
         && request.resource.data.name is string
         && request.resource.data.name.size() > 0 && request.resource.data.name.size() <= 60
         && request.resource.data.stats == {'completedHandoffs':0,'thumbsUp':0,'thumbsDown':0};
-      allow update: if student() && isOwner(uid)
+      allow update: if student() && owner(uid)
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['name'])
         && request.resource.data.name is string
-        && request.resource.data.name.size() > 0
-        && request.resource.data.name.size() <= 60;
+        && request.resource.data.name.size() > 0 && request.resource.data.name.size() <= 60;
       allow delete: if false;
     }
     match /listings/{listingId} {
@@ -69,7 +67,7 @@ service cloud.firestore {
         && request.resource.data.id == listingId
         && request.resource.data.sellerId == request.auth.uid
         && request.resource.data.status == 'active'
-        && validListing(request.resource.data);
+        && safeListing(request.resource.data);
       allow update: if cofcStudent()
         && resource.data.sellerId == request.auth.uid
         && resource.data.status == 'active'
@@ -77,7 +75,7 @@ service cloud.firestore {
         && request.resource.data.sellerId == resource.data.sellerId
         && request.resource.data.createdAt == resource.data.createdAt
         && request.resource.data.status in ['active','removed']
-        && validListing(request.resource.data);
+        && safeListing(request.resource.data);
       allow delete: if false;
     }
     match /saves/{saveId} {
@@ -92,87 +90,8 @@ service cloud.firestore {
       allow delete: if signedIn() && resource.data.userId == request.auth.uid;
       allow update: if false;
     }
-    // Private messages, deals, offers, payment and handoff data may only
-    // be written by a trusted transactional server, not client SDK calls.
-    match /{document=**} { allow read, write: if false; }
-  }
-}
-);
-    }
-    function validPhoto(d) {
-      return !('photoUrl' in d)
-        || (d.photoUrl is string && d.photoUrl.size() <= 65000
-          && (d.photoUrl.matches('^data:image/jpeg;base64,[A-Za-z0-9+/=]+$')
-            || d.photoUrl.matches('^/listings/[A-Za-z0-9-]+\\.webp$')));
-    }
-    function validListing(d) {
-      return d.keys().hasOnly(['id','sellerId','title','description','category',
-          'priceCents','location','photoUrl','courseCode','status','createdAt'])
-        && d.id is string && d.sellerId is string
-        && d.title is string && d.title.size() >= 3 && d.title.size() <= 80
-        && d.description is string && d.description.size() <= 1000
-        && d.location is string && d.location.size() <= 100
-        && d.category in ['Furniture','Electronics','Textbooks','Appliances','Clothing','Other']
-        && d.priceCents is int && d.priceCents >= 0 && d.priceCents <= 1000000
-        && d.createdAt is string && validPhoto(d);
-    }
-    match /users/{uid} {
-      allow get: if isOwner(uid);
-      allow list: if false;
-      allow create: if isOwner(uid) && eduEmail()
-        && request.resource.data.keys().hasOnly(['id','name','email','dorm','joinedAt','stats'])
-        && request.resource.data.id == uid
-        && request.resource.data.email == request.auth.token.email
-        && request.resource.data.name is string
-        && request.resource.data.name.size() > 0 && request.resource.data.name.size() <= 60
-        && request.resource.data.stats == {'completedHandoffs':0,'thumbsUp':0,'thumbsDown':0};
-      allow update: if isOwner(uid)
-        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['name','dorm']);
-      allow delete: if false;
-    }
-    match /publicProfiles/{uid} {
-      allow get, list: if true;
-      allow create: if student() && isOwner(uid)
-        && request.resource.data.keys().hasOnly(['id','name','joinedAt','stats'])
-        && request.resource.data.id == uid
-        && request.resource.data.name is string
-        && request.resource.data.name.size() > 0 && request.resource.data.name.size() <= 60
-        && request.resource.data.stats == {'completedHandoffs':0,'thumbsUp':0,'thumbsDown':0};
-      allow update: if isOwner(uid)
-        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['name']);
-      allow delete: if false;
-    }
-    match /listings/{listingId} {
-      allow get, list: if true;
-      allow create: if student()
-        && request.resource.data.id == listingId
-        && request.resource.data.sellerId == request.auth.uid
-        && request.resource.data.status == 'active'
-        && validListing(request.resource.data);
-      allow update: if student()
-        && resource.data.sellerId == request.auth.uid
-        && resource.data.status == 'active'
-        && request.resource.data.id == resource.data.id
-        && request.resource.data.sellerId == resource.data.sellerId
-        && request.resource.data.createdAt == resource.data.createdAt
-        && request.resource.data.status in ['active','removed']
-        && validListing(request.resource.data);
-      allow delete: if false;
-    }
-    match /saves/{saveId} {
-      allow get: if signedIn() && saveId.matches(request.auth.uid + '_[A-Za-z0-9_-]+');
-      allow list: if signedIn() && resource.data.userId == request.auth.uid;
-      allow create: if student()
-        && request.resource.data.keys().hasOnly(['userId','listingId','savedAt'])
-        && request.resource.data.userId == request.auth.uid
-        && request.resource.data.listingId is string
-        && request.resource.data.savedAt is string
-        && saveId == request.auth.uid + '_' + request.resource.data.listingId;
-      allow delete: if signedIn() && resource.data.userId == request.auth.uid;
-      allow update: if false;
-    }
-    // Private messages, deals, offers, payment and handoff data may only
-    // be written by a trusted transactional server, not client SDK calls.
+    // Deals, messages, offers, payments and secret handoff data are disabled
+    // until a trusted transactional backend exists.
     match /{document=**} { allow read, write: if false; }
   }
 }
