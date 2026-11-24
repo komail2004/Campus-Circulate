@@ -1,74 +1,59 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    function signedIn() {
-      return request.auth != null;
-    }
-    function student() {
+    function signedIn() { return request.auth != null; }
+    function isOwner(uid) { return signedIn() && request.auth.uid == uid; }
+    function eduEmail() {
       return signedIn()
-        && request.auth.token.email_verified == true
         && request.auth.token.email is string
         && request.auth.token.email.matches('^[^@ ]+@[^@ ]+\\.edu$');
     }
-    function isOwner(uid) {
-      return signedIn() && request.auth.uid == uid;
+    function student() { return eduEmail() && request.auth.token.email_verified == true; }
+    function validPhoto(d) {
+      return !('photoUrl' in d)
+        || (d.photoUrl is string && d.photoUrl.size() <= 65000
+          && (d.photoUrl.matches('^data:image/jpeg;base64,[A-Za-z0-9+/=]+$')
+            || d.photoUrl.matches('^/listings/[A-Za-z0-9-]+\\.webp$')));
     }
-    function validPhoto(data) {
-      return !('photoUrl' in data)
-        || (data.photoUrl is string
-          && data.photoUrl.size() <= 65000
-          && (data.photoUrl.matches('^data:image/jpeg;base64,[A-Za-z0-9+/=]+$')
-            || data.photoUrl.matches('^/listings/[A-Za-z0-9-]+\\.webp$')));
+    function validListing(d) {
+      return d.keys().hasOnly(['id','sellerId','title','description','category',
+          'priceCents','location','photoUrl','courseCode','status','createdAt'])
+        && d.id is string && d.sellerId is string
+        && d.title is string && d.title.size() >= 3 && d.title.size() <= 80
+        && d.description is string && d.description.size() <= 1000
+        && d.location is string && d.location.size() <= 100
+        && d.category in ['Furniture','Electronics','Textbooks','Appliances','Clothing','Other']
+        && d.priceCents is int && d.priceCents >= 0 && d.priceCents <= 1000000
+        && d.createdAt is string && validPhoto(d);
     }
-    function validListing(data) {
-      return data.keys().hasOnly([
-        'id', 'sellerId', 'title', 'description', 'category', 'priceCents',
-        'location', 'photoUrl', 'courseCode', 'status', 'createdAt'
-      ])
-        && data.id is string
-        && data.sellerId is string
-        && data.title is string && data.title.size() >= 3 && data.title.size() <= 100
-        && data.description is string && data.description.size() <= 2000
-        && data.location is string && data.location.size() <= 100
-        && data.category in ['Furniture', 'Electronics', 'Textbooks', 'Appliances', 'Clothing', 'Other']
-        && data.priceCents is int && data.priceCents >= 0 && data.priceCents <= 100000000
-        && data.createdAt is string
-        && validPhoto(data);
-    }
-    match /users/{userId} {
-      allow read: if isOwner(userId);
-      allow create: if isOwner(userId)
-        && request.auth.token.email is string
-        && request.auth.token.email.matches('^[^@ ]+@[^@ ]+\\.edu$')
+    match /users/{uid} {
+      allow get: if isOwner(uid);
+      allow list: if false;
+      allow create: if isOwner(uid) && eduEmail()
         && request.resource.data.keys().hasOnly(['id','name','email','dorm','joinedAt','stats'])
-        && request.resource.data.id == userId
+        && request.resource.data.id == uid
         && request.resource.data.email == request.auth.token.email
         && request.resource.data.name is string
-        && request.resource.data.name.size() > 0
-        && request.resource.data.name.size() <= 60
-        && request.resource.data.stats == {'completedHandoffs': 0, 'thumbsUp': 0, 'thumbsDown': 0};
-      allow update: if isOwner(userId)
-        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['name', 'dorm'])
-        && request.resource.data.name is string
-        && request.resource.data.name.size() > 0
-        && request.resource.data.name.size() <= 60;
+        && request.resource.data.name.size() > 0 && request.resource.data.name.size() <= 60
+        && request.resource.data.stats == {'completedHandoffs':0,'thumbsUp':0,'thumbsDown':0};
+      allow update: if isOwner(uid)
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['name','dorm']);
       allow delete: if false;
     }
-    match /publicProfiles/{userId} {
-      allow read: if true;
-      allow create: if student() && isOwner(userId)
+    match /publicProfiles/{uid} {
+      allow get, list: if true;
+      allow create: if student() && isOwner(uid)
         && request.resource.data.keys().hasOnly(['id','name','joinedAt','stats'])
-        && request.resource.data.id == userId
+        && request.resource.data.id == uid
         && request.resource.data.name is string
-        && request.resource.data.name.size() > 0
-        && request.resource.data.name.size() <= 60
-        && request.resource.data.stats == {'completedHandoffs': 0, 'thumbsUp': 0, 'thumbsDown': 0};
-      allow update: if isOwner(userId)
+        && request.resource.data.name.size() > 0 && request.resource.data.name.size() <= 60
+        && request.resource.data.stats == {'completedHandoffs':0,'thumbsUp':0,'thumbsDown':0};
+      allow update: if isOwner(uid)
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['name']);
       allow delete: if false;
     }
     match /listings/{listingId} {
-      allow read: if true;
+      allow get, list: if true;
       allow create: if student()
         && request.resource.data.id == listingId
         && request.resource.data.sellerId == request.auth.uid
@@ -80,45 +65,24 @@ service cloud.firestore {
         && request.resource.data.id == resource.data.id
         && request.resource.data.sellerId == resource.data.sellerId
         && request.resource.data.createdAt == resource.data.createdAt
-        && request.resource.data.status in ['active', 'removed']
+        && request.resource.data.status in ['active','removed']
         && validListing(request.resource.data);
       allow delete: if false;
     }
-    // A user's saved items are private. These records have no marketplace authority.
     match /saves/{saveId} {
-      allow get: if signedIn() && saveId.matches('^' + request.auth.uid + '_.*
-      allow create: if student()
-        && request.resource.data.keys().hasOnly(['userId', 'listingId', 'savedAt'])
-        && request.resource.data.userId == request.auth.uid
-        && request.resource.data.listingId is string
-        && request.resource.data.savedAt is string
-        && saveId == request.auth.uid + '_' + request.resource.data.listingId;
-      allow update: if false;
-    }
-    // Marketplace money, inventory transitions, secret handoff codes, offers and
-    // private messages MUST be moved to a trusted transactional backend first.
-    // Never expose these direct document writes to the client.
-    match /{document=**} {
-      allow read, write: if false;
-    }
-  }
-}
-);
+      allow get: if signedIn() && saveId.matches(request.auth.uid + '_[A-Za-z0-9_-]+');
       allow list: if signedIn() && resource.data.userId == request.auth.uid;
-      allow delete: if signedIn() && resource.data.userId == request.auth.uid;
       allow create: if student()
-        && request.resource.data.keys().hasOnly(['userId', 'listingId', 'savedAt'])
+        && request.resource.data.keys().hasOnly(['userId','listingId','savedAt'])
         && request.resource.data.userId == request.auth.uid
         && request.resource.data.listingId is string
         && request.resource.data.savedAt is string
         && saveId == request.auth.uid + '_' + request.resource.data.listingId;
+      allow delete: if signedIn() && resource.data.userId == request.auth.uid;
       allow update: if false;
     }
-    // Marketplace money, inventory transitions, secret handoff codes, offers and
-    // private messages MUST be moved to a trusted transactional backend first.
-    // Never expose these direct document writes to the client.
-    match /{document=**} {
-      allow read, write: if false;
-    }
+    // Private messages, deals, offers, payment and handoff data may only
+    // be written by a trusted transactional server, not client SDK calls.
+    match /{document=**} { allow read, write: if false; }
   }
 }
