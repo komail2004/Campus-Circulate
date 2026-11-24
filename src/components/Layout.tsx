@@ -2,6 +2,8 @@ import { ArrowsClockwiseIcon, ChatCircleIcon, HeartIcon, HouseIcon, MagnifyingGl
 import { useState, type MouseEvent, type ReactNode } from "react";
 import { Link, NavLink, Outlet, useNavigate, useSearchParams } from "react-router";
 import { unreadDealCount } from "../data/selectors.ts";
+import { sampleUsers } from "../data/sample.ts";
+import { localMode } from "../config.ts";
 import { useStore } from "../data/storeContext.ts";
 import { initials } from "../lib/format.ts";
 import type { LayoutContext } from "./layoutContext.ts";
@@ -113,6 +115,33 @@ export default function Layout() {
         </div>
       </header>
       <div className="stripe" />
+      {localMode && (
+        <div className="border-b border-line bg-surface-2">
+          <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-2 px-4 py-2 text-xs text-body">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="rounded-md bg-gold px-2 py-1 font-bold text-navy">CLASS DEMO</span>
+              <span>Local simulation · no real email, payment or shared database</span>
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <label htmlFor="demo-switch" className="font-semibold">Present as</label>
+              <select id="demo-switch" aria-label="Switch classroom demo student" className="rounded-md border border-line bg-surface px-2 py-1.5 text-ink"
+                value={sampleUsers.some(u => u.id === currentUser?.id) ? currentUser?.id : ""}
+                onChange={event => {
+                  if (!event.target.value) return;
+                  void store.signInAsSample(event.target.value).then(() => navigate("/"));
+                }}>
+                <option value="">Choose a student</option>
+                {sampleUsers.map(u => <option key={u.id} value={u.id}>{u.name} · {u.id === "u2" ? "Seller" : "Buyer"}</option>)}
+              </select>
+              <button type="button" className="rounded-md border border-line bg-surface px-2 py-1.5 font-medium hover:bg-surface-2"
+                onClick={() => {
+                  if (!window.confirm("Reset the classroom demo? New listings, chats and deals in this browser will be cleared.")) return;
+                  void store.resetLocalData().then(() => navigate("/"));
+                }}>Reset demo</button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {saveFailed && (
         <p role="alert" className="bg-danger px-4 py-2 text-center text-sm font-medium text-white">
