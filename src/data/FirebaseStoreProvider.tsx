@@ -4,7 +4,7 @@
 
 import { useEffect, useState, type ReactNode } from "react";
 import {
-  createUserWithEmailAndPassword, onAuthStateChanged, sendEmailVerification,
+  createUserWithEmailAndPassword, onIdTokenChanged, sendEmailVerification,
   signInWithEmailAndPassword, signOut,
 } from "firebase/auth";
 import {
@@ -89,7 +89,7 @@ export default function FirebaseStoreProvider({ children }: { children: ReactNod
     let alive = true;
     let stopOwn: (() => void) | undefined;
     let stopSaves: (() => void) | undefined;
-    const stopAuth = onAuthStateChanged(firebaseAuth, user => {
+    const stopAuth = onIdTokenChanged(firebaseAuth, user => {
       stopOwn?.();
       stopSaves?.();
       stopOwn = undefined;
