@@ -71,17 +71,23 @@ export default function FirebaseStoreProvider({ children }: { children: ReactNod
 
   useEffect(() => {
     let alive = true;
-    const fail = (err: Error) => { if (alive) { console.error(err); setError("Firebase could not load the marketplace. Check your connection and project rules."); } };
+    const fail = (section: "listings" | "profiles") => (err: Error) => {
+      if (!alive) return;
+      console.error("Failed to load Firebase " + section, err);
+      setError("Unable to read " + section + " from Firestore. Check that the Firebase security rules are published and allow public reads.");
+      // Never leave the app trapped on Loading when Firestore rejects a subscription.
+      setLoaded(state => ({ ...state, [section]: true }));
+    };
     const stopListings = onSnapshot(collection(firestore, "listings"), snapshot => {
       if (!alive) return;
       setListings(snapshot.docs.map(d => d.data() as Listing));
       setLoaded(s => ({ ...s, listings: true }));
-    }, fail);
+    }, fail("listings"));
     const stopProfiles = onSnapshot(collection(firestore, "publicProfiles"), snapshot => {
       if (!alive) return;
       setProfiles(snapshot.docs.map(d => ({ email: "", ...d.data() }) as User));
       setLoaded(s => ({ ...s, profiles: true }));
-    }, fail);
+    }, fail("profiles"));
     return () => { alive = false; stopListings(); stopProfiles(); };
   }, []);
 
@@ -118,13 +124,23 @@ export default function FirebaseStoreProvider({ children }: { children: ReactNod
 
   const users = own ? [...profiles.filter(p => p.id !== own.id), own] : profiles;
   const data: Data = { ...empty, users, listings, saves };
-  const ready = loaded.auth && loaded.listings && loaded.profiles && loaded.own;
+  // A missing database permission or blocked network must not prevent sign-in or
+  // display an infinite spinner. Show the app and an actionable error instead.
+  const ready = !!error || (loaded.auth && loaded.listings && loaded.profiles && loaded.own);
+
+  useEffect(() => {
+    if (ready) return;
+    const timeout = window.setTimeout(() => {
+      setError("The Firebase connection is taking too long. Check Firestore Rules, your connection, or reload this page.");
+    }, 12000);
+    return () => window.clearTimeout(timeout);
+  }, [ready]);
 
   const store: Store = {
     ...data,
     ready,
     currentUser: identity && own && own.id === identity.uid ? own : null,
-    saveFailed: !!error,
+    saveFailed: false, // Firebase errors are not browser storage errors.
 
     async signIn(email, password) {
       if (!password) throw new RuleError("Enter your password.");
@@ -239,7 +255,12 @@ export default function FirebaseStoreProvider({ children }: { children: ReactNod
   };
   return (
     <StoreContext value={store}>
-      {error && <p role="alert" className="bg-red-700 p-3 text-center text-sm text-white">{error}</p>}
+      {error && (
+        <div role="alert" className="bg-red-700 p-3 text-center text-sm text-white">
+          <span>{error}</span>
+          <button type="button" className="ml-3 underline" onClick={() => window.location.reload()}>Retry</button>
+        </div>
+      )}
       {children}
     </StoreContext>
   );
