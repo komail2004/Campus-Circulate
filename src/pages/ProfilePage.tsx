@@ -42,7 +42,7 @@ export default function ProfilePage() {
           <h1 className="heading text-3xl">{name}</h1>
           <p className="mt-1.5 flex items-center gap-1.5 text-sm text-muted">
             <SealCheckIcon size={16} weight="fill" className="text-brand" />
-            Verified student{campus && ` at ${campus.name}`}
+            Student{campus && ` at ${campus.name}`}
           </p>
           <p className="text-sm text-muted">Joined {user.joinedAt.slice(0, 7)}</p>
         </div>

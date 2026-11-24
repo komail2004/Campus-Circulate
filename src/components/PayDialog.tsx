@@ -13,17 +13,17 @@ export default function PayDialog({ title, sellerName, cents, onConfirm, onClose
 }) {
   const free = cents === 0;
   return (
-    <ConfirmDialog title={free ? "Reserve this item" : `Simulate ${formatPrice(cents)} purchase`} confirmLabel={free ? "Reserve" : "Simulate purchase"} onConfirm={onConfirm} onClose={onClose}>
+    <ConfirmDialog title={free ? "Reserve this item" : `Reserve item for ${formatPrice(cents)}`} confirmLabel={free ? "Reserve" : "Confirm reservation"} onConfirm={onConfirm} onClose={onClose}>
       <p>
         <span className="font-semibold text-ink">{title}</span> from {sellerName}
       </p>
       <p className="flex gap-2.5 rounded-lg bg-surface-2 p-3 text-sm">
         <ShieldCheckIcon size={20} className="shrink-0 text-brand" />
         {free
-          ? `In this class demo, the item is reserved until you meet ${sellerName} and share your handoff code.`
-          : `Demo only: ${formatPrice(cents)} is marked held for ${sellerName}. No actual money moves and no card is charged.`}
+          ? `The item is reserved until you meet ${sellerName} and share your handoff code.`
+          : `Your reservation for ${formatPrice(cents)} with ${sellerName} is recorded. No charge is made.`}
       </p>
-      {localMode && !free && <p className="text-sm text-muted">Class demo only: no card is charged and no real escrow occurs.</p>}
+      {localMode && !free && <p className="text-sm text-muted">No payment or escrow is processed on this site.</p>}
     </ConfirmDialog>
   );
 }

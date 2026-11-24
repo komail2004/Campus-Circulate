@@ -90,7 +90,7 @@ describe("deal views", () => {
     expect(dealStatusLabel(data, dealIn(data, dealId))).toBe("Chatting");
     expect(dealStatusLabel(data, dealIn(cancelDeal(data, ctxAt(), "bob", dealId).data, dealId))).toBe("Cancelled by Bob Smith");
     const held = paid();
-    expect(dealStatusLabel(held.data, dealIn(held.data, held.dealId))).toBe("Payment held");
+    expect(dealStatusLabel(held.data, dealIn(held.data, held.dealId))).toBe("Purchase reserved");
   });
 });
 

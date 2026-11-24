@@ -42,7 +42,7 @@ export default function BrowsePage() {
     <div>
       {!currentUser && (
         <section className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-lg bg-surface-2 p-4">
-          <p className="max-w-[52ch] text-[15px] text-body">{localMode ? "Buy and sell with fellow students on your campus. Payments are simulated in this demo." : "Find and post items near campus with verified student accounts. Checkout is not enabled yet."}</p>
+          <p className="max-w-[52ch] text-[15px] text-body">{localMode ? "Browse, sell and reserve items with fellow students on your campus." : "Find and post items near campus with verified student accounts. Checkout is not enabled yet."}</p>
           <button type="button" onClick={openSignIn} className="btn btn-primary">
             Sign in
           </button>

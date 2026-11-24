@@ -46,14 +46,14 @@ export default function SignInModal({ onClose }: { onClose: () => void }) {
   }
 
   return (
-    <Modal title={create ? "Create your demo account" : "Welcome to CampusCirculate"} onClose={onClose}>
+    <Modal title={create ? "Create an account" : "Welcome to CampusCirculate"} onClose={onClose}>
       <div className="mb-5 rounded-xl border border-line bg-surface-2 p-3 text-sm text-body">
-        <p className="font-semibold text-ink">Classroom demonstration</p>
-        <p className="mt-1">No real email or payments. Accounts, purchases and messages are simulated in this browser.</p>
+        <p className="font-semibold text-ink">CampusCirculate accounts</p>
+        <p className="mt-1">Your account information is stored in this browser. Email ownership is not verified.</p>
       </div>
       {!create && (
         <section className="mb-5">
-          <p className="mb-3 text-sm font-semibold">Jump into the demo</p>
+          <p className="mb-3 text-sm font-semibold">Explore the marketplace</p>
           <div className="grid gap-2 sm:grid-cols-2">
             {sampleUsers.map(user => (
               <button key={user.id} type="button" disabled={busy}
@@ -67,7 +67,7 @@ export default function SignInModal({ onClose }: { onClose: () => void }) {
         </section>
       )}
       <form onSubmit={event => { event.preventDefault(); void submit(); }} className="space-y-4 border-t border-line pt-5">
-        <h3 className="font-semibold">{create ? "Create a student profile" : "Sign in with a demo email"}</h3>
+        <h3 className="font-semibold">{create ? "Create a student profile" : "Sign in with your school email"}</h3>
         {create && (
           <div>
             <label className="label" htmlFor="demo-name">Name</label>
@@ -89,10 +89,10 @@ export default function SignInModal({ onClose }: { onClose: () => void }) {
         {create && !campus && isEduEmail(email) && <p className="text-sm text-muted">You can explore, but selling is currently limited to College of Charleston.</p>}
         {error && <p role="alert" className="text-sm text-danger">{error}</p>}
         <button type="submit" disabled={busy || !email.trim() || (create && !name.trim())} className="btn btn-primary w-full">
-          {create ? "Create demo profile" : "Sign in locally"}
+          {create ? "Create account" : "Sign in"}
         </button>
         <button type="button" className="link block w-full text-center text-sm" onClick={() => { setCreate(!create); setError(""); }}>
-          {create ? "Have a profile? Sign in" : "Need an account? Create a demo profile"}
+          {create ? "Have a profile? Sign in" : "Need an account? Create one"}
         </button>
       </form>
     </Modal>
