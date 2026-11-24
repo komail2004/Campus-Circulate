@@ -1,117 +1,100 @@
 import { useState } from "react";
-import { localMode } from "../config.ts";
 import { campusForEmail, placesOnCampus } from "../data/campus.ts";
 import { friendlyError, isEduEmail } from "../data/rules/index.ts";
+import { sampleUsers } from "../data/sample.ts";
 import { useStore } from "../data/storeContext.ts";
 import Modal from "./Modal.tsx";
 
-type Mode = "signIn" | "signUp";
-
-// Sign in or create an account: details first, then the 6-digit code from the school email.
-// In local mode there's no email service, so the code is shown on screen.
+// Classroom simulation: no email sent and no genuine identity verification.
 export default function SignInModal({ onClose }: { onClose: () => void }) {
-  const { signIn, signUp } = useStore();
-  const [mode, setMode] = useState<Mode>("signIn");
+  const { signIn, signUp, signInAsSample } = useStore();
+  const [create, setCreate] = useState(false);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [dorm, setDorm] = useState("");
   const [error, setError] = useState("");
-  const [password, setPassword] = useState("");
-  const [notice, setNotice] = useState("");
-
-  const isSignUp = mode === "signUp";
+  const [busy, setBusy] = useState(false);
   const campus = campusForEmail(email);
-  const dormOptions = campus ? placesOnCampus(campus.id) : [];
-  const chosenDorm = dormOptions.some((p) => p.name === dorm) ? dorm : dormOptions[0]?.name;
+  const dorms = campus ? placesOnCampus(campus.id) : [];
+  const chosenDorm = dorms.some(h => h.name === dorm) ? dorm : dorms[0]?.name;
 
-  function switchMode() {
-    setMode(isSignUp ? "signIn" : "signUp");
+  async function submit() {
     setError("");
-    setPassword("");
-    setNotice("");
+    setBusy(true);
+    try {
+      if (create) await signUp({ name, email, dorm: chosenDorm });
+      else await signIn(email);
+      onClose();
+    } catch (err) {
+      setError(friendlyError(err));
+    } finally {
+      setBusy(false);
+    }
   }
 
-  async function submitFirebase() {
+  async function choose(id: string) {
     setError("");
+    setBusy(true);
     try {
-      if (isSignUp) {
-        await signUp({ name, email, dorm: chosenDorm }, password);
-        setNotice("Your account was created. Check your school email for the Firebase verification link. After verifying, return here and sign in.");
-      } else {
-        await signIn(email, password);
-        onClose();
-      }
+      await signInAsSample(id);
+      onClose();
     } catch (err) {
-      const code = err && typeof err === "object" && "code" in err ? String((err as {code: unknown}).code) : "";
-      if (code === "auth/email-already-in-use") setError("An account already uses that email. Sign in instead.");
-      else if (code === "auth/invalid-credential" || code === "auth/wrong-password") setError("Invalid email or password.");
-      else if (code === "auth/too-many-requests") setError("Too many attempts. Please try again later.");
-      else if (code === "auth/weak-password") setError("Choose a stronger password.");
-      else setError(friendlyError(err));
+      setError(friendlyError(err));
+    } finally {
+      setBusy(false);
     }
   }
 
   return (
-    <Modal title={isSignUp ? "Create an account" : "Sign in"} onClose={onClose}>
-      <p className="-mt-2 mb-5 text-sm text-muted">
-        {isSignUp ? "Already have an account? " : "New to CampusCirculate? "}
-        <button type="button" onClick={switchMode} className="link">
-          {isSignUp ? "Sign in" : "Create an account"}
-        </button>
-      </p>
-
-
-      {!localMode ? (
-        notice ? (
-          <div className="space-y-4">
-            <p role="status" className="rounded-lg bg-surface-2 p-4 text-sm text-body">{notice}</p>
-            <button type="button" onClick={() => { setNotice(""); setMode("signIn"); setPassword(""); }} className="btn btn-primary w-full">
-              Return to sign in
-            </button>
+    <Modal title={create ? "Create your demo account" : "Welcome to CampusCirculate"} onClose={onClose}>
+      <div className="mb-5 rounded-xl border border-line bg-surface-2 p-3 text-sm text-body">
+        <p className="font-semibold text-ink">Classroom demonstration</p>
+        <p className="mt-1">No real email or payments. Accounts, purchases and messages are simulated in this browser.</p>
+      </div>
+      {!create && (
+        <section className="mb-5">
+          <p className="mb-3 text-sm font-semibold">Jump into the demo</p>
+          <div className="grid gap-2 sm:grid-cols-2">
+            {sampleUsers.map(user => (
+              <button key={user.id} type="button" disabled={busy}
+                onClick={() => void choose(user.id)}
+                className="btn btn-outline min-h-14 flex-col gap-0.5">
+                <span>{user.name}</span>
+                <span className="text-xs font-normal text-muted">{user.id === "u2" ? "Seller account" : "Buyer account"}</span>
+              </button>
+            ))}
           </div>
-        ) : (
-          <form className="space-y-4" onSubmit={event => { event.preventDefault(); void submitFirebase(); }}>
-            {isSignUp && (
-              <div>
-                <label htmlFor="real-signin-name" className="label">Full name</label>
-                <input id="real-signin-name" className="field" autoComplete="name" maxLength={60} required value={name} onChange={e => setName(e.target.value)} />
-              </div>
-            )}
-            <div>
-              <label htmlFor="real-signin-email" className="label">School email</label>
-              <input id="real-signin-email" type="email" className="field" autoComplete="email" required
-                value={email} onChange={e => { setEmail(e.target.value); setError(""); }} placeholder="you@school.edu" />
-            </div>
-            {isSignUp && campus && (
-              <div>
-                <label htmlFor="real-signin-dorm" className="label">Your residence hall</label>
-                <select id="real-signin-dorm" className="field" value={chosenDorm} onChange={e => setDorm(e.target.value)}>
-                  {dormOptions.map(place => <option key={place.name} value={place.name}>{place.name}</option>)}
-                </select>
-              </div>
-            )}
-            {isSignUp && !campus && isEduEmail(email) && (
-              <p className="text-sm text-muted">Your school isn't listed yet. You can browse, but only students at supported campuses can post listings.</p>
-            )}
-            <div>
-              <label htmlFor="real-signin-password" className="label">Password</label>
-              <input id="real-signin-password" type="password" className="field"
-                autoComplete={isSignUp ? "new-password" : "current-password"}
-                required minLength={8} value={password} onChange={e => setPassword(e.target.value)} />
-              {isSignUp && <p className="mt-1 text-xs text-muted">At least 8 characters. A verification email is required before selling.</p>}
-            </div>
-            {error && <p role="alert" className="text-sm text-danger">{error}</p>}
-            <button type="submit" disabled={!email.trim() || password.length < 8} className="btn btn-primary w-full">
-              {isSignUp ? "Create account and send verification" : "Sign in"}
-            </button>
-          </form>
-        )
-      ) : (
-        <div className="rounded-lg bg-surface-2 p-4 text-sm text-body" role="status">
-          <p className="font-semibold">Real student sign-in is being configured.</p>
-          <p className="mt-2">This deployment does not have Firebase authentication enabled. A code displayed on this page would not verify your school email. Use the Firebase-enabled preview after the database rules are published and tested.</p>
-        </div>
+        </section>
       )}
+      <form onSubmit={event => { event.preventDefault(); void submit(); }} className="space-y-4 border-t border-line pt-5">
+        <h3 className="font-semibold">{create ? "Create a student profile" : "Sign in with a demo email"}</h3>
+        {create && (
+          <div>
+            <label className="label" htmlFor="demo-name">Name</label>
+            <input className="field" id="demo-name" required maxLength={60} value={name} onChange={e => setName(e.target.value)} placeholder="Your name" />
+          </div>
+        )}
+        <div>
+          <label className="label" htmlFor="demo-email">School email</label>
+          <input className="field" id="demo-email" type="email" required value={email} onChange={e => setEmail(e.target.value)} placeholder="student@g.cofc.edu"/>
+        </div>
+        {create && campus && (
+          <div>
+            <label className="label" htmlFor="demo-hall">Residence hall</label>
+            <select className="field" id="demo-hall" value={chosenDorm} onChange={e => setDorm(e.target.value)}>
+              {dorms.map(h => <option key={h.name} value={h.name}>{h.name}</option>)}
+            </select>
+          </div>
+        )}
+        {create && !campus && isEduEmail(email) && <p className="text-sm text-muted">You can explore, but selling is currently limited to College of Charleston.</p>}
+        {error && <p role="alert" className="text-sm text-danger">{error}</p>}
+        <button type="submit" disabled={busy || !email.trim() || (create && !name.trim())} className="btn btn-primary w-full">
+          {create ? "Create demo profile" : "Sign in locally"}
+        </button>
+        <button type="button" className="link block w-full text-center text-sm" onClick={() => { setCreate(!create); setError(""); }}>
+          {create ? "Have a profile? Sign in" : "Need an account? Create a demo profile"}
+        </button>
+      </form>
     </Modal>
   );
 }
