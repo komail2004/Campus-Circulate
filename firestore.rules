@@ -1,0 +1,105 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() {
+      return request.auth != null;
+    }
+    function student() {
+      return signedIn()
+        && request.auth.token.email_verified == true
+        && request.auth.token.email is string
+        && request.auth.token.email.matches('^[^@ ]+@[^@ ]+\\.edu$');
+    }
+    function isOwner(uid) {
+      return signedIn() && request.auth.uid == uid;
+    }
+    function validPhoto(data) {
+      return !('photoUrl' in data)
+        || (data.photoUrl is string
+          && data.photoUrl.size() <= 65000
+          && (data.photoUrl.matches('^data:image/jpeg;base64,[A-Za-z0-9+/=]+$')
+            || data.photoUrl.matches('^/listings/[A-Za-z0-9-]+\\.webp$')));
+    }
+    function validListing(data) {
+      return data.keys().hasOnly([
+        'id', 'sellerId', 'title', 'description', 'category', 'priceCents',
+        'location', 'photoUrl', 'courseCode', 'status', 'createdAt'
+      ])
+        && data.id is string
+        && data.sellerId is string
+        && data.title is string && data.title.size() >= 3 && data.title.size() <= 100
+        && data.description is string && data.description.size() <= 2000
+        && data.location is string && data.location.size() <= 100
+        && data.category in ['Furniture', 'Electronics', 'Textbooks', 'Appliances', 'Clothing', 'Other']
+        && data.priceCents is int && data.priceCents >= 0 && data.priceCents <= 100000000
+        && data.createdAt is string
+        && validPhoto(data);
+    }
+    match /users/{userId} {
+      allow read: if isOwner(userId);
+      allow create: if isOwner(userId)
+        && request.auth.token.email is string
+        && request.auth.token.email.matches('^[^@ ]+@[^@ ]+\\.edu$')
+        && request.resource.data.keys().hasOnly(['id','name','email','dorm','joinedAt','stats'])
+        && request.resource.data.id == userId
+        && request.resource.data.email == request.auth.token.email
+        && request.resource.data.name is string
+        && request.resource.data.name.size() > 0
+        && request.resource.data.name.size() <= 60
+        && request.resource.data.stats == {'completedHandoffs': 0, 'thumbsUp': 0, 'thumbsDown': 0};
+      allow update: if isOwner(userId)
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['name', 'dorm'])
+        && request.resource.data.name is string
+        && request.resource.data.name.size() > 0
+        && request.resource.data.name.size() <= 60;
+      allow delete: if false;
+    }
+    match /publicProfiles/{userId} {
+      allow read: if true;
+      allow create: if isOwner(userId)
+        && request.resource.data.keys().hasOnly(['id','name','joinedAt','stats'])
+        && request.resource.data.id == userId
+        && request.resource.data.name is string
+        && request.resource.data.name.size() > 0
+        && request.resource.data.name.size() <= 60
+        && request.resource.data.stats == {'completedHandoffs': 0, 'thumbsUp': 0, 'thumbsDown': 0};
+      allow update: if isOwner(userId)
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['name']);
+      allow delete: if false;
+    }
+    match /listings/{listingId} {
+      allow read: if true;
+      allow create: if student()
+        && request.resource.data.id == listingId
+        && request.resource.data.sellerId == request.auth.uid
+        && request.resource.data.status == 'active'
+        && validListing(request.resource.data);
+      allow update: if student()
+        && resource.data.sellerId == request.auth.uid
+        && resource.data.status == 'active'
+        && request.resource.data.id == resource.data.id
+        && request.resource.data.sellerId == resource.data.sellerId
+        && request.resource.data.createdAt == resource.data.createdAt
+        && request.resource.data.status in ['active', 'removed']
+        && validListing(request.resource.data);
+      allow delete: if false;
+    }
+    // A user's saved items are private. These records have no marketplace authority.
+    match /saves/{saveId} {
+      allow read, delete: if signedIn() && resource.data.userId == request.auth.uid;
+      allow create: if student()
+        && request.resource.data.keys().hasOnly(['userId', 'listingId', 'savedAt'])
+        && request.resource.data.userId == request.auth.uid
+        && request.resource.data.listingId is string
+        && request.resource.data.savedAt is string
+        && saveId == request.auth.uid + '_' + request.resource.data.listingId;
+      allow update: if false;
+    }
+    // Marketplace money, inventory transitions, secret handoff codes, offers and
+    // private messages MUST be moved to a trusted transactional backend first.
+    // Never expose these direct document writes to the client.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
